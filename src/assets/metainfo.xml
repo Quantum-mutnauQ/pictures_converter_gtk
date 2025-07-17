@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.quantum_mutnauq.pictures_converter_gtk</id>
+  
+  <name>Fast Reader</name>
+  <name xml:lang="de">Geschwindigkeitsleser</name>
+
+  <summary>Reading one word at a time</summary>
+  <summary xml:lang="de">Ein Wort nach dem anderen lesen</summary>
+
+  <developer id="io.github.quantum_mutnauq.pictures_converter_gtk">
+    <name>Quantum_mutnauQ</name>
+  </developer>  
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>GPL-2.0-only</project_license>
+  
+   <description>
+    <p>Fast Reader helps you to read more quickly, by showing only one word after the other. Therefor the eyes don’t have to move from word to word, that reduce the speed of reading. To read the text you only have to copy the text into the big field in the middle and to start it. You can choose two different basic settings. Either you can choose the next word bei using the button „→“ or you can use the „Time based next word“. By this setting can be the duration of the word chosen. The selection is processed with a factor so that longer words are not displayed too short. This dynamic setting ensures that longer and more complex words are given more time to provide a natural and fluid reading experience. Reading can be started via the “Read” button. Experienced readers can even have more than one word displayed at once. This increases the reading speed even further.</p>
+    <p xml:lang="de">Fast Reader hilft Ihnen dabei schnell zu lesen, indem es nur ein Wort auf einmal anzeigt. Dadurch muss das Auge nicht von Wort zu Wort zu Wort springen, dass die Lesegeschwindigkeit reduziert. Um den Text zu lesen, muss er in das große Feld in der Mitte kopiert werden. Es gibt zwei unterschiedliche Grundeinstellung. Entweder wird das nächste Wort durch die → Taste angezeigt, oder eine „Zeitbasiert nächstes Wort“ ausgewählt. Dort kann die Verweildauer eines Wortes gewählt werden. Die Angabe wird mit einen Faktor verarbeitet, damit längere Wörter nicht zu kurz angezeigt werden. Diese dynamische Einstellung sichert, dass längere und komplexere Wörter mehr Zeit erhalten, um eine natürliche und flüssiges Lesen zu bieten. Das lesen kann über die „Lesen“ Taste gestartet werden. Geübten Lesern ist es sogar möglich mehrere Wörter auf einmal anzeigen zu lassen. Dadurch erhöht sich sie Lesegeschwindigkeit um ein weiteres.</p>
+    
+    <p>This program offers individual settings to improve reading:</p>
+    <p xml:lang="de">Dieses Programm bietet individuelle Einstellungen an, um das Lesen zu verbessern:</p>
+
+    <ul>
+        <li>Background colour</li>
+        <li xml:lang="de">Hintergrundfarbe</li>
+
+        <li>Font colour</li>
+        <li xml:lang="de">Schriftfarbe</li>
+
+        <li>Font and size</li>
+        <li xml:lang="de">Schriftart und Größe</li>
+
+        <li>Reading progress in the text</li>
+        <li xml:lang="de">Lesefortschritt im Text</li>
+    </ul>
+
+    <p>used to highlight which words took a particularly long time and which were read quickly.</p>
+    <p xml:lang="de">Über die Aktivierung der Statistik erhält man sein persönliche Lesegeschwindigkeit der Worte. Diese Statistik ist interessant, wenn man nicht „Zeitbasiert“ liest. Dort kann über Farben hervorgehoben werden, welche Worte besonders viel Zeit benötigten und welche schnell erfasst wurden.</p>
+
+    <p>In the "Advanced settings for time-based next word", you can extend the display time for longer words. Here, you can set the duration of the time and from how many characters this time should be used. Additionally, you can also specify a delay at the start, so that the first word remains on the screen for a longer period.</p>
+    <p xml:lang="de">In den "Erweiterten Einstellungen für zeitbasiertes nächstes Wort" können Sie die Standzeit für längere Wörter verlängern. Hier können Sie festlegen, wie lange die Zeit dauern soll und ab wie vielen Buchstaben diese Zeit genutzt werden soll. Zusätzlich können Sie auch eine Verzögerung beim Start angeben, sodass das erste Wort länger auf dem Bildschirm bleibt.</p>
+
+    <ul>   
+        <li>Customizable Settings: Tailor your reading experience by adjusting settings like background color, text color, font size, and display of progress indicators.</li>
+        <li xml:lang="de">Anpassbare Einstellungen: Passen Sie Ihre Leseerfahrung an, indem Sie Einstellungen wie Hintergrundfarbe, Textfarbe, Schriftgröße und Anzeige von Fortschrittsindikatoren anpassen.</li>
+
+        <li>Text Input: Easily input text into the application through a dedicated text entry field.</li>
+        <li xml:lang="de">Texteingabe: Fügen Sie einfach Text in das Programm ein, indem Sie einen dedizierten Texteingabefeld verwenden.</li>
+
+        <li>Word-by-Word Display: The text is broken down into individual words, presented one at a time, facilitating focused reading.</li>
+        <li xml:lang="de">Wort für Wort-Anzeige: Der Text wird in einzelne Wörter aufgeteilt und als Einzelworte angezeigt, um konzentriertes Lesen zu ermöglichen.</li>
+
+        <li>Navigation Options: Seamlessly navigate through the text using intuitive navigation buttons or convenient keyboard shortcuts.</li>
+        <li xml:lang="de">Navigationsoptionen: Navigieren Sie leicht durch den Text mit intuitiven Navigationstasten oder bequemen Tastenkombinationen.</li>
+
+        <li>Progress Indicators: Keep track of your reading progress with helpful indicators displaying your current position in the text and overall progress.</li>
+        <li xml:lang="de">Fortschrittsindikatoren: Verfolgen Sie Ihren Lesevorschritt mit hilfreichen Indikatoren, die Ihre aktuelle Position im Text und den Gesamtfortschritt anzeigen.</li>
+
+        <li>Time-Based Word predictions: You can set a variable time calculate by a formal for the display of each word. The formula for calculating the word display time is: "Time-Per-Word × (Cube Root of Word-Length)". This dynamic adjustment ensures that longer, more complex words are allotted more time, providing a natural and responsive reading experience.</li>
+        <li xml:lang="de">Zeitbasierte Wortvorhersagen: Stellen Sie eine variable Zeitspanne fest, um jedes Wort anzuzeigen. Die Formel für die Berechnung der Anzeigedauer eines Wortes lautet: "Zeit pro Wort × (Kubikwurzel des Wortlängen)". Diese dynamische Einstellung sichert sicherzustellen, dass längere und komplexere Wörter mehr Zeit benötigen, um eine natürliche und reaktive Leseerfahrung zu bieten.</li>
+
+        <li>Statistic Collection: Generates statistics for you, showing how long you took to read each word.</li>
+        <li xml:lang="de">Statistik-Sammlung: Erstellt Statistiken für Sie, die anzeigen, wie lange es dauerte, jedes Wort zu lesen.</li>
+
+        <li>Colorize Statistics: Makes the statistics colorful (optional), allowing you to quickly see how long you took per word and identify which words were very slow or fast.</li>
+        <li xml:lang="de">Farbige Statistiken: Färbt die Statistiken farbig (optional), sodass Sie schnell erkennen können, wie lange Sie pro Wort benötigt haben und welche Wörter sehr langsam oder schnell gelesen wurden.</li>
+    </ul>
+   </description>
+
+<launchable type="desktop-id">io.github.quantum_mutnauq.pictures_converter_gtk.desktop</launchable>
+<icon type="stock">io.github.quantum_mutnauq.pictures_converter_gtk</icon>
+<categories>
+  <category>Education</category>
+</categories>
+
+  <keywords>
+    <keyword>reading</keyword>
+    <keyword>fast reading</keyword>
+    <keyword>fast reader</keyword>
+    <keyword>quick reader</keyword>
+    <keyword>quick reading</keyword>
+  </keywords>
+
+<branding>
+  <color type="primary" scheme_preference="light">#3584e4</color>
+  <color type="primary" scheme_preference="dark">#134380</color>
+</branding>
+
+<content_rating type="oars-1.0" />
+
+<url type="bugtracker">https://github.com/Quantum-mutnauQ/pictures_converter_GTK/issues</url>
+<url type="homepage">https://github.com/Quantum-mutnauQ/pictures_converter_GTK/</url>
+
+<screenshots>
+  <screenshot type="default">
+    <caption>startpage</caption>
+    <image>https://github.com/user-attachments/assets/6de4cee5-b628-42c4-bea0-ede9130b102d</image>
+  </screenshot>
+  <screenshot>
+    <caption>startpage</caption>
+    <image>https://github.com/Quantum-mutnauQ/pictures_converter_GTK/assets/141065355/48d57ddf-fe5d-4209-aaed-1b30403e1816</image>
+  </screenshot>
+  <screenshot>
+    <caption>readingpage</caption>
+    <image>https://github.com/user-attachments/assets/a8433539-2451-4863-a260-e844d4bc868e</image>
+  </screenshot>
+  <screenshot>
+    <caption>readingpage</caption>
+    <image>https://github.com/Quantum-mutnauQ/pictures_converter_GTK/assets/141065355/cc7e675b-7642-43a6-a2a9-a5eecfc2e72d</image>
+  </screenshot>
+  <screenshot>
+    <caption>statisticspage</caption>
+    <image>https://github.com/user-attachments/assets/6195e5e6-5c20-4446-a75b-6a44a4235514</image>
+  </screenshot>
+  <screenshot>
+    <caption>statisticspage</caption>
+    <image>https://github.com/Quantum-mutnauQ/pictures_converter_GTK/assets/141065355/0e4b847a-79a7-496a-a9cc-8c63dbe68507</image>
+  </screenshot>
+  <screenshot>
+    <caption>statisticspage</caption>
+    <image>https://github.com/user-attachments/assets/044fc9d1-aa70-4128-80b3-fb7554f04750</image>
+  </screenshot>
+  <screenshot>
+    <caption>statisticspage</caption>
+    <image>https://github.com/Quantum-mutnauQ/Fast-Reader-GTK/assets/141065355/6131c3e0-7c8b-479e-95de-31b312c993b4</image>
+  </screenshot>
+</screenshots>
+
+
+<releases>
+  <release version="7.4" date="2025-5-22">
+    <description>
+        Version 7.4
+        <p>New features added:</p>
+        <ul>
+            <li>Remembers your last reading progress</li>
+            <li>Prompts you to jump to your last progress</li>
+            <li>Button to quickly jump to your last progress</li>
+        </ul>
+    </description>
+  </release>
+  <release version="7.3" date="2025-4-24">
+    <description>
+        Version 7.3
+        <p>New features added:</p>
+        <ul>
+            <li>Added individual option to reset settings in the menu bar</li>
+            <li>Remembers window size after closing and reopening</li>
+            <li>Added support for fullscreen mode</li>
+            <li>Added keyboard shortcuts:</li>
+            <li>Ctrl + Q to close the application</li>
+            <li>F11 to toggle fullscreen mode</li>
+
+        </ul>
+    </description>
+  </release>
+  <release version="7.2" date="2025-4-6">
+    <description>
+        Version 7.2
+        <p>New features added:</p>
+        <ul>
+            <li>Introduced a menu bar</li>
+            <li>Included additional information in the "About" section</li>
+            <li>updated sdk on flatpak</li>
+        </ul>
+    </description>
+  </release>
+  <release version="7.1" date="2025-3-10">
+    <description>
+      Version 7.1
+      <p>New features and improvements</p>
+      <ul>
+        <li>Option for longer time for wery long word.</li>
+        <li>Option for longer time on first word usng Time-Based Word predictions.</li>
+        <li>Pausebutton on Time-Based Word predictions.</li>
+        <li>Refine the description</li>
+      </ul>
+    </description>
+  </release>
+  <release version="7" date="2025-2-9">
+    <description>
+      Version 7
+      <p>GTK update</p>
+      <ul>
+        <li>Move to GTK 4.14.2 version</li>
+      </ul>
+    </description>
+  </release>
+  <release version="6.3" date="2025-1-6">
+    <description>
+      Version 6.3
+      <p>Some Improvements</p>
+      <ul>
+        <li>Enhanced the readability of the settings</li>
+        <li>Enhanced the readability of the statistics</li>
+        <li>Fixed metainfo</li>
+        <li>Italian Language</li>
+      </ul>
+    </description>
+  </release>
+  <release version="6.2" date="2024-12-30">
+    <description>
+      Version 6.2
+      <p>Flatpak Support</p>
+      <ul>
+        <li>Did some things in cmake.</li>
+      </ul>
+    </description>
+  </release>
+  <release version="6.1" date="2024-12-29">
+    <description>
+      Version 6.1
+      <p>Flatpak Support</p>
+      <ul>
+        <li>Did some things in cmake.</li>
+      </ul>
+    </description>
+  </release>
+  <release version="6" date="2024-12-29">
+    <description>
+      Version 6
+      <p>Flatpak Support</p>
+      <ul>
+        <li>Introduced CMake integration</li>
+        <li>Added CMake options specifically for Flatpak</li>
+        <li>Implemented buttons for copy, paste, clear, and undo in the input text field</li>
+        <li>Initialized support for GTK version 4.14.2</li>
+      </ul>
+    </description>
+  </release>
+  <release version="5" date="2024-07-11">
+    <description>
+      Version 5
+      <p>Include statistics like time per word</p>
+        <ul>
+          <li>Introduces a new statistics window</li>
+          <li>Includes an option to control statistics creation</li>
+          <li>Provides an option to customize the color of the statistics window</li>
+          <li>Generates statistics for: Total read time, time per word, time percentage per word, and a score per word</li>
+        </ul>
+    </description>
+  </release>
+  <release version="4" date="2024-07-05">
+    <description>
+      Version 4
+      <p>Implement time-based word predictions</p>
+        <ul>
+          <li>Added Implement time-based word prediction</li>
+          <li>Moved to cpp (C++)</li>
+        </ul>
+    </description>
+  </release>
+  <release version="3" date="2024-06-17">
+    <description>
+      Version 3
+      <p>Add config support</p>
+        <ul>
+          <li>Saves all you settings in a file.</li>
+          <li>Saves your last text in this file also.</li>
+        </ul>
+    </description>
+  </release>
+  <release version="2" date="2024-06-09">
+    <description>
+      Version 2
+        <ul>
+          <li>Support for multi languages that are German and English(Hopefully works).</li>
+          <li>he ability to show multiple words at the same time.</li>
+        </ul>
+    </description>
+  </release>
+  <release version="1" date="2024-06-01">
+    <description>
+      Version 1
+      <p>The first version from the Speed reader</p>
+    </description>
+  </release>
+</releases>
+
+<translation type="gettext">gnome-builder</translation>
+
+<custom>
+    <value key="flathub::manifest">https://github.com/flathub/io.github.quantum_mutnauq.pictures_converter_gtk/blob/master/io.github.quantum_mutnauq.pictures_converter_gtk.yml</value>
+</custom>
+</component>
+
+
