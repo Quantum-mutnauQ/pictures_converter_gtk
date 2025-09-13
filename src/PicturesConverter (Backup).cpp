@@ -18,26 +18,19 @@ struct outFile{
     const gchar *outFilePath;
     const gchar *inFilePath;
     uint32_t *pages;
-    uint32_t numPages;
     uint32_t max_pages;
 };
 struct inJobFile{
     const gchar *inFilePath;
     uint32_t *pages;
-    uint32_t numPages;
-
 };
 struct convertJobFile{
     const gchar *outFilePath;
     GList *inJobFiles;
 };
-typedef struct {
-    GtkProgressBar *bar;
-    GtkLabel       *label;
-    GtkWindow      *window;
-} UIInfo;
 
 #define _(STRING) gettext(STRING)
+#define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 
 GList *choosed_file_paths = NULL;
 GList *convert_file_paths=NULL;
@@ -83,44 +76,6 @@ void on_check_button_toggled(GtkCheckButton *toggle_button, gpointer user_data) 
     gboolean active = gtk_check_button_get_active(toggle_button);
     ((inFile*) user_data)->selected =active;
 }
-// Handler für Doppelklick auf das Bild
-static void on_image_double_click(GtkGestureClick *gesture,
-                                  int n_press,
-                                  double x,
-                                  double y,
-                                  gpointer user_data)
-{
-    if (n_press == 2) { // Doppelclick
-        const gchar *filepath = (const gchar *)user_data;
-        if (filepath && g_file_test(filepath, G_FILE_TEST_EXISTS)){
-
-            GError *error = NULL;
-
-            /* Nautilus‑AppInfo holen (Standard‑Dateimanager) */
-            GAppInfo *app = g_app_info_get_default_for_type ("inode/directory", FALSE);
-            if (!app) {
-                g_warning (_("Kein Standard‑Dateimanager gefunden"));
-                return;
-            }
-
-            /* GFile für den Ordner erzeugen */
-            GFile *folder = g_file_new_for_path (filepath);
-            GList *files = g_list_append (NULL, folder);
-
-            /* Launch */
-            if (!g_app_info_launch (app, files, NULL, &error)) {
-                g_warning (_("Start fehlgeschlagen: %s"), error->message);
-                g_error_free (error);
-            }
-
-            /* Aufräumen */
-            g_object_unref (folder);
-            g_list_free (files);
-            g_object_unref (app);
-        }
-    }
-}
-
 
 void refresh_coosedlistbox(GtkWidget *listbox, GList *paths) {
     gtk_list_box_remove_all(GTK_LIST_BOX(listbox));
@@ -131,21 +86,6 @@ void refresh_coosedlistbox(GtkWidget *listbox, GList *paths) {
 
         GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
 
-        gchar *filepath_copy = g_strdup(filepath);
-
-        GtkGestureClick *img_click = GTK_GESTURE_CLICK(gtk_gesture_click_new());
-        gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(img_click), GDK_BUTTON_PRIMARY);
-
-        // Daten-Ownership an GTK übergeben → wird mit g_free freigegeben
-        g_signal_connect_data(img_click, "pressed",
-                              G_CALLBACK(on_image_double_click),
-                              filepath_copy,
-                              (GClosureNotify)g_free,
-                              (GConnectFlags)0);
-
-        gtk_widget_add_controller(row, GTK_EVENT_CONTROLLER(img_click));
-
-
         GtkWidget *checkButton = gtk_check_button_new();
         g_signal_connect(checkButton, "toggled", G_CALLBACK(on_check_button_toggled), ((inFile*) l->data));
 
@@ -154,7 +94,6 @@ void refresh_coosedlistbox(GtkWidget *listbox, GList *paths) {
 
         GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale(filepath, 48, 48, TRUE, NULL);
         GtkWidget *image;
-
 
         if (pixbuf) {
             GdkTexture *texture = gdk_texture_new_for_pixbuf(pixbuf);
@@ -197,21 +136,6 @@ void refresh_computedlistbox(GtkWidget *listbox, GList *paths) {
         const gchar *filepath = (const gchar*)out_File->outFilePath;
 
         GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-
-        gchar *filepath_copy = g_strdup(filepath);
-
-        GtkGestureClick *img_click = GTK_GESTURE_CLICK(gtk_gesture_click_new());
-        gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(img_click), GDK_BUTTON_PRIMARY);
-
-        // Daten-Ownership an GTK übergeben → wird mit g_free freigegeben
-        g_signal_connect_data(img_click, "pressed",
-                              G_CALLBACK(on_image_double_click),
-                              filepath_copy,
-                              (GClosureNotify)g_free,
-                              (GConnectFlags)0);
-
-        gtk_widget_add_controller(row, GTK_EVENT_CONTROLLER(img_click));
-
 
         GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale((const gchar*)out_File->inFilePath, 48, 48, TRUE, NULL);
         GtkWidget *image;
@@ -298,470 +222,397 @@ static gboolean is_multiside_format(const gchar *filename) {
     ext++; // skip the '.'
     return g_ascii_strcasecmp(ext, "pdf") == 0 || g_ascii_strcasecmp(ext, "tiff") == 0 || g_ascii_strcasecmp(ext, "tif") == 0;
 }
-GList *group_convert_jobs(GList *outFiles) {
+
+GList* group_convert_jobs(GList *outFiles) {
     GList *result = NULL;
-    GHashTable *grouped = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_list_free);
 
-    // Gruppierung der outFile-Einträge
-    GList *outFileIter;
-    for (outFileIter = outFiles; outFileIter != NULL; outFileIter = g_list_next(outFileIter)) {
-        struct outFile *outFile = (struct outFile *)outFileIter->data;
-        GList **group = (GList **)g_hash_table_lookup(grouped, outFile->outFilePath);
+    // Gruppiere alle outFile nach outFilePath
+    GHashTable *grouped = g_hash_table_new(g_str_hash, g_str_equal);
 
-        if (group == NULL) {
-            group = g_new0(GList *, 1);
-            *group = NULL;
-            g_hash_table_insert(grouped, g_strdup(outFile->outFilePath), group);
-        }
+    for (GList *l = outFiles; l != NULL; l = l->next) {
+        struct outFile *of = (struct outFile *)l->data;
 
-        *group = g_list_append(*group, outFile);
+        GList *group = (GList *)g_hash_table_lookup(grouped, of->outFilePath);
+        group = g_list_append(group, of);
+        g_hash_table_insert(grouped, (gpointer)of->outFilePath, group);
     }
 
-    // Verarbeitung jeder Gruppe
+    // Verarbeite jede Gruppe
     GHashTableIter iter;
     gpointer key, value;
     g_hash_table_iter_init(&iter, grouped);
     while (g_hash_table_iter_next(&iter, &key, &value)) {
-        GList *group = *(GList **)value;
-        gboolean multiside = is_multiside_format(((struct outFile *)group->data)->outFilePath);
+        const gchar *outFilePath = (const gchar *)key;
+        GList *group = (GList *)value;
 
-        if (multiside) {
-            // Mehrseitiges Format
-            struct convertJobFile *convertJobFile = g_new0(struct convertJobFile, 1);
-            convertJobFile->outFilePath = g_strdup((const gchar *)key);
-            convertJobFile->inJobFiles = NULL;
+        // Prüfe Format
+        gboolean is_multi = is_multiside_format(outFilePath);
 
-            GList *inJobFileIter;
-            for (inJobFileIter = group; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
-                struct outFile *outFile = (struct outFile *)inJobFileIter->data;
-                struct inJobFile *inJobFile = g_new0(struct inJobFile, 1);
-                inJobFile->inFilePath = outFile->inFilePath;
-                inJobFile->pages = outFile->pages;
-                inJobFile->numPages=outFile->numPages;
-                convertJobFile->inJobFiles = g_list_append(convertJobFile->inJobFiles, inJobFile);
+        if (is_multi) {
+            // Alle in einer convertJobFile sammeln
+            struct convertJobFile *job = g_new0(struct convertJobFile, 1);
+            job->outFilePath = outFilePath;
+
+            for (GList *g = group; g != NULL; g = g->next) {
+                struct outFile *of = (struct outFile *)g->data;
+                struct inJobFile *inj = g_new(struct inJobFile, 1);
+                inj->inFilePath = of->inFilePath;
+                //------------------------------------------------------------------------
+                inj->pages = of->pages;
+                job->inJobFiles = g_list_append(job->inJobFiles, inj);
             }
 
-            result = g_list_append(result, convertJobFile);
+            result = g_list_append(result, job);
         } else {
-            // Einseitiges Format
-            GList *inJobFileIter;
-            for (inJobFileIter = group; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
-                struct outFile *outFile = (struct outFile *)inJobFileIter->data;
-                struct convertJobFile *convertJobFile = g_new0(struct convertJobFile, 1);
-                convertJobFile->outFilePath = g_strdup((const gchar *)key);
-                convertJobFile->inJobFiles = NULL;
+            // Für jede Eingabedatei eine eigene convertJobFile
+            int index = 0;
+            for (GList *g = group; g != NULL; g = g->next, index++) {
+                struct outFile *of = (struct outFile *)g->data;
 
-                struct inJobFile *inJobFile = g_new0(struct inJobFile, 1);
-                inJobFile->inFilePath = outFile->inFilePath;
-                inJobFile->pages = outFile->pages;
-                inJobFile->numPages=outFile->numPages;
-                convertJobFile->inJobFiles = g_list_append(convertJobFile->inJobFiles, inJobFile);
+                struct convertJobFile *job = g_new0(struct convertJobFile, 1);
 
-                result = g_list_append(result, convertJobFile);
+                // Neuen Dateinamen erzeugen mit _0, _1, ...
+                gchar *newOutPath = g_strdup_printf("%s_%d%s",
+                                                    g_strndup(outFilePath, (gint)(strrchr(outFilePath, '.') - outFilePath)), // ohne Erweiterung
+                                                    index,
+                                                    strrchr(outFilePath, '.')); // Erweiterung
+
+                job->outFilePath = newOutPath;
+
+                struct inJobFile *inj = g_new(struct inJobFile, 1);
+                inj->inFilePath = of->inFilePath;
+                uint32_t *pages = new uint32_t[1];
+                pages[0]=0;
+                inj->pages =pages;
+
+                job->inJobFiles = g_list_append(NULL, inj);
+                result = g_list_append(result, job);
             }
         }
     }
 
-    // Aufräumen
     g_hash_table_destroy(grouped);
-
     return result;
 }
-void free_convert_jobs(GList *convertJobFiles) {
-    GList *convertJobFileIter;
-    for (convertJobFileIter = convertJobFiles; convertJobFileIter != NULL; convertJobFileIter = g_list_next(convertJobFileIter)) {
-        struct convertJobFile *convertJobFile = (struct convertJobFile *)convertJobFileIter->data;
-
-        // Freigeben der inJobFiles
-        GList *inJobFileIter;
-        for (inJobFileIter = convertJobFile->inJobFiles; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
-            struct inJobFile *inJobFile = (struct inJobFile *)inJobFileIter->data;
-            g_free((void *)inJobFile->pages); // Freigeben des Seitenarrays
-            g_free(inJobFile); // Freigeben der inJobFile-Struktur
-        }
-        g_list_free(convertJobFile->inJobFiles); // Freigeben der GList der inJobFiles
-
-        // Freigeben des ausgabepfades
-        g_free((void *)convertJobFile->outFilePath); // Freigeben des ausgabepfades
-        g_free(convertJobFile); // Freigeben der convertJobFile-Struktur
-    }
-    g_list_free(convertJobFiles); // Freigeben der GList der convertJobFiles
+void free_convertJobFile(gpointer data){
+    struct inJobFile* file = (inJobFile*)data;
+    g_free((gpointer)file->inFilePath);
+    g_free(file);
 }
-// Funktion zur Ausgabe der Übersicht
-void printJobOverview(GList *convertJobFiles) {
-    GList *convertJobFileIter;
-    GList *inJobFileIter;
+void free_convert_job_file(gpointer data) {
+    if (!data) return;
 
-    for (convertJobFileIter = convertJobFiles; convertJobFileIter != NULL; convertJobFileIter = g_list_next(convertJobFileIter)) {
-        struct convertJobFile *convertJobFile = (struct convertJobFile *)convertJobFileIter->data;
+    struct convertJobFile *job = (struct convertJobFile *)data;
 
-        g_print("Output File: %s\n", convertJobFile->outFilePath);
+    // Gib alle inJobFiles frei
+    if (job->inJobFiles) {
+        g_list_free_full(job->inJobFiles, (GDestroyNotify)free_convertJobFile);
+        job->inJobFiles = NULL;
+    }
 
-        for (inJobFileIter = convertJobFile->inJobFiles; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
-            struct inJobFile *inJobFile = (struct inJobFile *)inJobFileIter->data;
+    // Falls outFilePath dynamisch alloziert wurde (z.B. mit g_strdup), freigeben
+    // Nur freigeben, wenn du sicher bist, dass du Besitzer des Strings bist
+    //g_free((gpointer)job->outFilePath);
 
-            g_print("  Input File: %s\n", inJobFile->inFilePath);
-            g_print("    Pages: ");
-            for (uint32_t i = 0; i < inJobFile->numPages; i++) {
-                g_print("%u ", inJobFile->pages[i]);
-            }
-            g_print("\n");
+    // Zum Schluss das struct selbst freigeben
+    g_free(job);
+}
+guchar* convert_rgba_to_rgb(const guchar* src, int width, int height, int src_rowstride) {
+    guchar *rgb_data = (guchar *)g_malloc(width * height * 3);
+    for (int y = 0; y < height; y++) {
+        const guchar *row = src + y * src_rowstride;
+        for (int x = 0; x < width; x++) {
+            rgb_data[(y * width + x) * 3 + 0] = row[x * 4 + 0]; // R
+            rgb_data[(y * width + x) * 3 + 1] = row[x * 4 + 1]; // G
+            rgb_data[(y * width + x) * 3 + 2] = row[x * 4 + 2]; // B
+            // Alpha ignorieren
         }
     }
+    return rgb_data;
 }
-// Hilfsfunktion: Falls Datei existiert, neuen Namen mit _1, _2, ... generieren
-static gchar *ensure_unique_filename(const gchar *path) {
-    gchar *dir = g_path_get_dirname(path);
-    gchar *base = g_path_get_basename(path);
-    gchar *ext = strrchr(base, '.');
-    gchar *name_part;
-    if (ext) {
-        name_part = g_strndup(base, ext - base);
-        ext = g_strdup(ext);
-    } else {
-        name_part = g_strdup(base);
-        ext = g_strdup("");
+void printConvertJobFileList(GList *convertJobFileList) {
+    // Überprüfen, ob die Liste leer ist
+    if (convertJobFileList == NULL) {
+        printf("Die Liste der ConvertJobFiles ist leer.\n");
+        return;
     }
 
-    gchar *new_path = g_build_filename(dir, base, NULL);
-    int counter = 1;
-    while (g_file_test(new_path, G_FILE_TEST_EXISTS)) {
-        g_free(new_path);
-        gchar *new_name = g_strdup_printf("%s_%d%s", name_part, counter++, ext);
-        new_path = g_build_filename(dir, new_name, NULL);
-        g_free(new_name);
+    // Durchlaufe die Liste der convertJobFile-Elemente
+    for (GList *node = convertJobFileList; node != NULL; node = node->next) {
+        struct convertJobFile *jobFile = (struct convertJobFile *)node->data;
+
+        // Ausgabe der Informationen des convertJobFile
+        printf("Ausgabedatei: %s\n", jobFile->outFilePath);
+        printf("   Eingabedateien:\n");
+
+        // Durchlaufe die Liste der inJobFiles
+        for (GList *inJobNode = jobFile->inJobFiles; inJobNode != NULL; inJobNode = inJobNode->next) {
+            struct inJobFile *inJobFile = (struct inJobFile *)inJobNode->data;
+            for(uint32_t i = 0; i <ARRAY_COUNT(inJobFile->pages);i++)
+            //----------------------------------------------------------------------------------------------------------
+            printf("     - Eingabedatei: %s, Seite: %dS\n", inJobFile->inFilePath, i);
+        }
+
+        printf("\n"); // Leerzeile für bessere Lesbarkeit
     }
-
-    g_free(dir);
-    g_free(base);
-    g_free(name_part);
-    g_free(ext);
-
-    return new_path;
 }
+gboolean save_pixbuf_as_pdf(GdkPixbuf *pixbuf, const gchar *filename, GError **error) {
+    int width = gdk_pixbuf_get_width(pixbuf);
+    int height = gdk_pixbuf_get_height(pixbuf);
 
-// PDF-Seiten als Cairo-Oberfläche rendern
-static gboolean render_pdf_page_to_surface(const gchar *pdf_path, guint page_num, double dpi, cairo_surface_t **out_surface) {
-    GError *error = NULL;
-    gchar *uri = g_strdup_printf("file://%s", pdf_path);
-    PopplerDocument *doc = poppler_document_new_from_file(uri, NULL, &error);
-    g_free(uri);
-
-    if (!doc) {
-        if (error) g_error_free(error);
+    cairo_surface_t *surface = cairo_pdf_surface_create(filename, width, height);
+    if (!surface) {
+        g_set_error(error, g_quark_from_static_string("save-pdf"), 1, "PDF-Surface konnte nicht erstellt werden.");
         return FALSE;
     }
 
-    PopplerPage *page = poppler_document_get_page(doc, page_num);
-    if (!page) {
-        g_object_unref(doc);
-        return FALSE;
-    }
-
-    double width_points, height_points;
-    poppler_page_get_size(page, &width_points, &height_points);
-
-    // 72 dpi ist Standard in PDF (1 Punkt = 1/72 Zoll)
-    double scale = dpi / 72.0;
-    int width_px  = (int)(width_points  * scale + 0.5);
-    int height_px = (int)(height_points * scale + 0.5);
-
-    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width_px, height_px);
     cairo_t *cr = cairo_create(surface);
 
-    // Hintergrund auf Weiß setzen
-    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0); // Weiß
+    // Pixbuf → Cairo pattern
+    gdk_cairo_set_source_pixbuf(cr, pixbuf, 0, 0);
     cairo_paint(cr);
 
-    // Skalierung setzen, damit Poppler in höherer Auflösung rendert
-    cairo_scale(cr, scale, scale);
-    poppler_page_render(page, cr);
-
     cairo_destroy(cr);
+    cairo_surface_destroy(surface);
 
-    *out_surface = surface;
-
-    g_object_unref(page);
-    g_object_unref(doc);
     return TRUE;
 }
+GdkPixbuf* render_page_to_pixbuf(PopplerPage *page, double dpi) {
+    double width, height;
+    poppler_page_get_size(page, &width, &height);
 
-// Hauptkonvertierungsfunktion
-GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
-    GList *failed_files = NULL;
-    magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
-    magic_load(magic_cookie, NULL);
+    int pixel_width = (int)(width * dpi / 72.0);
+    int pixel_height = (int)(height * dpi / 72.0);
 
-    GtkLabel* label = info->label;
-    GtkProgressBar* progressBar = info->bar;
-    int total_jobs = g_list_length(convert_job_list);
-    int processed_jobs = 0;
+    cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, pixel_width, pixel_height);
+    cairo_t *cr = cairo_create(surface);
 
-    for (GList *job_iter = convert_job_list; job_iter != NULL; job_iter = job_iter->next) {
-        struct convertJobFile *job = (struct convertJobFile *)job_iter->data;
-        gchar *final_out_path = ensure_unique_filename(job->outFilePath);
-        gtk_label_set_text(label, final_out_path);
-        processed_jobs++;
-        gtk_progress_bar_set_fraction(progressBar,(double)processed_jobs / (double)total_jobs);
+    cairo_scale(cr, dpi / 72.0, dpi / 72.0); // Skalierung für gewünschte DPI
+    poppler_page_render(page, cr);          // Seite auf Cairo zeichnen
+    cairo_destroy(cr);
 
+    // Oberfläche in Pixbuf umwandeln
+    GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface(surface, 0, 0, pixel_width, pixel_height);
 
-        gboolean job_success = TRUE;
+    cairo_surface_destroy(surface);
+    return pixbuf;
+}
 
-        // Multiside-Handling abhängig vom Zieltyp
-        const char *mime_type = magic_file(magic_cookie, job->outFilePath);
-        gboolean is_tiff_out = g_str_has_suffix(final_out_path, ".tiff") || g_str_has_suffix(final_out_path, ".tif");
-        gboolean is_pdf_out = g_str_has_suffix(final_out_path, ".pdf");
+const gchar* get_format_from_extension(const gchar *filename) {
+    const gchar *ext = strrchr(filename, '.');
+    if (!ext || ext == filename) return NULL;
 
-        TIFF *tiff_out = NULL;
-        cairo_surface_t *pdf_surface = NULL;
-        cairo_t *pdf_cr = NULL;
-        if (is_tiff_out) {
-            tiff_out = TIFFOpen(final_out_path, "w8");
-            if (!tiff_out) {
-                job_success = FALSE;
-            }
-        } else if (is_pdf_out) {
-            pdf_surface = cairo_pdf_surface_create(final_out_path, 595, 842); // A4 Standardgröße
-            pdf_cr = cairo_create(pdf_surface);
-        }
+    ext++; // skip the '.'
 
-        for (GList *in_iter = job->inJobFiles; in_iter != NULL && job_success; in_iter = in_iter->next) {
-            struct inJobFile *infile = (struct inJobFile *)in_iter->data;
-            const char *in_mime = magic_file(magic_cookie, infile->inFilePath);
+    if (g_ascii_strcasecmp(ext, "jpg") == 0 || g_ascii_strcasecmp(ext, "jpeg") == 0) return "jpeg";
+    if (g_ascii_strcasecmp(ext, "png") == 0) return "png";
+    if (g_ascii_strcasecmp(ext, "tiff") == 0 || g_ascii_strcasecmp(ext, "tif") == 0) return "tiff";
+    if (g_ascii_strcasecmp(ext, "bmp") == 0) return "bmp";
 
-            for (uint32_t i = 0; i < infile->numPages && job_success; i++) {
-                cairo_surface_t *surf = NULL;
+    return NULL;
+}
+void perform_conversion_jobs(GList *convertJobFileList) {
+    for (GList *node = convertJobFileList; node != NULL; node = node->next) {
+        struct convertJobFile *jobFile = (struct convertJobFile *)node->data;
+        const gchar *output_path = jobFile->outFilePath;
 
-                // Quelle behandeln
-                if (g_str_has_prefix(in_mime, "application/pdf")) {
-                    if (!render_pdf_page_to_surface(infile->inFilePath, infile->pages[i], 300.0, &surf)) {
-                        job_success = FALSE;
-                        break;
-                    }
-                } else if (g_str_has_prefix(in_mime, "image/tiff")) {
-                    TIFF* tif = TIFFOpen(infile->inFilePath, "r");
-                    if (!tif || !TIFFSetDirectory(tif, infile->pages[i])) {
-                        if (tif) TIFFClose(tif);
-                        job_success = FALSE;
-                        break;
-                    }
+        gboolean is_tiff_output = g_str_has_suffix(output_path, ".tif") || g_str_has_suffix(output_path, ".tiff");
 
-                    uint32_t w, h;
-                    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
-                    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
-
-                    uint32_t* raster = (uint32_t*) _TIFFmalloc(w * h * sizeof(uint32_t));
-                    if (!raster || !TIFFReadRGBAImageOriented(tif, w, h, raster, ORIENTATION_TOPLEFT, 0)) {
-                        if (raster) _TIFFfree(raster);
-                        TIFFClose(tif);
-                        job_success = FALSE;
-                        break;
-                    }
-
-                    // wichtig: KEINE neue Variable!
-                    surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
-                    unsigned char* data = cairo_image_surface_get_data(surf);
-                    int stride = cairo_image_surface_get_stride(surf);
-
-                    for (uint32_t y = 0; y < h; y++) {
-                        uint32_t* src = raster + y * w;
-                        uint32_t* dst = (uint32_t*)(data + y * stride);
-                        for (uint32_t x = 0; x < w; x++) {
-                            uint32_t px = src[x]; // 0xAARRGGBB (von libtiff als BGRA geliefert)
-                            uint8_t r = TIFFGetR(px);
-                            uint8_t g = TIFFGetG(px);
-                            uint8_t b = TIFFGetB(px);
-                            uint8_t a = TIFFGetA(px);
-
-                            // ARGB32 premultiplied
-                            if (a < 255) {
-                                r = (r * a) / 255;
-                                g = (g * a) / 255;
-                                b = (b * a) / 255;
-                            }
-
-                            dst[x] = (a << 24) | (r << 16) | (g << 8) | b;
-                        }
-                    }
-
-                    cairo_surface_mark_dirty(surf);
-                    _TIFFfree(raster);
-                    TIFFClose(tif);
-                } else if (g_str_has_prefix(in_mime, "image/")) {
-                    surf = cairo_image_surface_create_from_png(infile->inFilePath);
-                    if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
-                        job_success = FALSE;
-                        break;
-                    }
-                } else {
-                    job_success = FALSE;
-                    break;
-                }
-
-                if (is_pdf_out) {
-                    /* Bildgröße ermitteln */
-                    int w = cairo_image_surface_get_width(surf);
-                    int h = cairo_image_surface_get_height(surf);
-                    cairo_pdf_surface_set_size(pdf_surface,w,h);
-                }
-
-
-                // Ziel behandeln
-                if (is_tiff_out) {
-                    int w = cairo_image_surface_get_width(surf);
-                    int h = cairo_image_surface_get_height(surf);
-                    unsigned char *data = cairo_image_surface_get_data(surf);
-                    int stride = cairo_image_surface_get_stride(surf);
-
-                    // Zuerst TIFF-Tags setzen
-                    TIFFSetField(tiff_out, TIFFTAG_IMAGEWIDTH, w);
-                    TIFFSetField(tiff_out, TIFFTAG_IMAGELENGTH, h);
-                    TIFFSetField(tiff_out, TIFFTAG_SAMPLESPERPIXEL, 4);
-                    TIFFSetField(tiff_out, TIFFTAG_BITSPERSAMPLE, 8);
-                    TIFFSetField(tiff_out, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-                    TIFFSetField(tiff_out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-                    TIFFSetField(tiff_out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-                    TIFFSetField(tiff_out, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-
-                    // Puffer für eine Zeile
-                    guchar *rowbuf = g_new(guchar, w * 4);
-
-                    for (int row = 0; row < h; row++) {
-                        uint32_t *src = (uint32_t *)(data + row * stride);
-                        for (int col = 0; col < w; col++) {
-                            uint32_t px = src[col];
-                            guchar a = (px >> 24) & 0xFF;
-                            guchar r = (px >> 16) & 0xFF;
-                            guchar g = (px >> 8) & 0xFF;
-                            guchar b = (px) & 0xFF;
-
-                            // Premultiplied Alpha rückgängig machen
-                            if (a > 0 && a < 255) {
-                                r = (r * 255) / a;
-                                g = (g * 255) / a;
-                                b = (b * 255) / a;
-                            }
-
-                            rowbuf[col * 4 + 0] = r;
-                            rowbuf[col * 4 + 1] = g;
-                            rowbuf[col * 4 + 2] = b;
-                            rowbuf[col * 4 + 3] = a; // Alpha ins TIFF schreiben
-                        }
-
-                        if (TIFFWriteScanline(tiff_out, rowbuf, row, 0) < 0) {
-                            job_success = FALSE;
-                            break;
-                        }
-                    }
-
-                    g_free(rowbuf);
-                    TIFFWriteDirectory(tiff_out);
-                } else if (is_pdf_out) {
-                    cairo_set_source_surface(pdf_cr, surf, 0, 0);
-                    cairo_paint(pdf_cr);
-                    cairo_show_page(pdf_cr);
-                } else {
-                    cairo_surface_write_to_png(surf, final_out_path);
-                }
-
-                cairo_surface_destroy(surf);
+        TIFF *tiff = NULL;
+        if (is_tiff_output) {
+            tiff = TIFFOpen(output_path, "w");
+            if (!tiff) {
+                g_printerr("Fehler beim Öffnen von %s für TIFF-Ausgabe.\n", output_path);
+                continue;
             }
         }
 
-        // Ausgabedateien schließen
-        if (tiff_out) TIFFClose(tiff_out);
-        if (pdf_cr) cairo_destroy(pdf_cr);
-        if (pdf_surface) cairo_surface_destroy(pdf_surface);
+        int page_index = 0;
 
-        if (!job_success) {
-            failed_files = g_list_append(failed_files, g_strdup(final_out_path));
+        for (GList *inNode = jobFile->inJobFiles; inNode != NULL; inNode = inNode->next, page_index++) {
+            struct inJobFile *inJob = (struct inJobFile *)inNode->data;
+            GdkPixbuf *pixbuf = NULL;
+
+            if (g_str_has_suffix(inJob->inFilePath, ".pdf")) {
+                // PDF verarbeiten
+                GError *error = NULL;
+                PopplerDocument *doc = poppler_document_new_from_file(
+                    g_strdup_printf("file://%s", inJob->inFilePath),
+                    NULL, &error);
+
+                if (!doc) {
+                    g_printerr("Fehler beim Laden von PDF %s: %s\n", inJob->inFilePath, error->message);
+                    g_error_free(error);
+                    continue;
+                }
+
+                int total_pages = poppler_document_get_n_pages(doc);
+                int maxpage=0;
+                int size = sizeof(inJob->pages)/sizeof(inJob->pages[0]);
+                for(int i; i > size;i++){
+                    if(maxpage < size){
+                        maxpage=i;
+                    }
+                }
+
+                if (maxpage >= total_pages) {
+                    //--------------------------------------------------------------------
+                    g_printerr("Ungültige Seite %n in %s (nur %d Seiten).\n",
+                               inJob->pages, inJob->inFilePath, total_pages);
+                    g_object_unref(doc);
+                    continue;
+                }
+
+                PopplerPage *page = poppler_document_get_page(doc, inJob->pages[0]);
+                if (!page) {
+                    //-----------------------------------------------------------------
+                    g_printerr("Fehler beim Abrufen der Seite %n von %s.\n", inJob->pages, inJob->inFilePath);
+                    g_object_unref(doc);
+                    continue;
+                }
+
+                pixbuf = render_page_to_pixbuf(page, 300.0);
+                g_object_unref(page);
+                g_object_unref(doc);
+            } else {
+                // Anderes Bildformat (PNG, JPG, etc.)
+                GError *load_error = NULL;
+                pixbuf = gdk_pixbuf_new_from_file(inJob->inFilePath, &load_error);
+                if (!pixbuf) {
+                    g_printerr("Fehler beim Laden von Bild %s: %s\n", inJob->inFilePath, load_error->message);
+                    g_error_free(load_error);
+                    continue;
+                }
+            }
+
+            if (!pixbuf) {
+                g_printerr("Kein Pixbuf für Datei %s\n", inJob->inFilePath);
+                continue;
+            }
+
+            if (is_tiff_output) {
+                int width = gdk_pixbuf_get_width(pixbuf);
+                int height = gdk_pixbuf_get_height(pixbuf);
+                int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+                int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+                gboolean has_alpha = gdk_pixbuf_get_has_alpha(pixbuf);
+                guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+
+                guchar *rgb_data = NULL;
+
+                if (has_alpha || n_channels == 4) {
+                    rgb_data = convert_rgba_to_rgb(pixels, width, height, rowstride);
+                    pixels = rgb_data;
+                    rowstride = width * 3;
+                    n_channels = 3;
+                }
+
+                // TIFF-Felder setzen
+                TIFFSetField(tiff, TIFFTAG_IMAGEWIDTH, width);
+                TIFFSetField(tiff, TIFFTAG_IMAGELENGTH, height);
+                TIFFSetField(tiff, TIFFTAG_SAMPLESPERPIXEL, n_channels);
+                TIFFSetField(tiff, TIFFTAG_BITSPERSAMPLE, 8);
+                TIFFSetField(tiff, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+                TIFFSetField(tiff, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+                TIFFSetField(tiff, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+                TIFFSetField(tiff, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+
+                // Zeilen schreiben
+                for (int y = 0; y < height; y++) {
+                    TIFFWriteScanline(tiff, pixels + y * rowstride, y, 0);
+                }
+
+                TIFFWriteDirectory(tiff);
+
+                if (rgb_data)
+                    g_free(rgb_data);
+            } else {
+                // Kein TIFF → wir schreiben direkt als JPG, PNG usw.
+                GError *save_error = NULL;
+
+                // Bei Multi-Eingaben: z.B. out.jpg → out_0.jpg, out_1.jpg usw.
+                gchar *final_path = (g_list_length(jobFile->inJobFiles) > 1)
+                                        ? g_strdup_printf("%s_%d%s",
+                                                          g_strndup(output_path, (gint)(strrchr(output_path, '.') - output_path)),
+                                                          page_index,
+                                                          strrchr(output_path, '.'))
+                                        : g_strdup(output_path);
+
+                const gchar *format = get_format_from_extension(final_path);
+
+                if (!format) {
+                    // PDF als Sonderfall behandeln
+                    if (g_str_has_suffix(final_path, ".pdf")) {
+                        if (!save_pixbuf_as_pdf(pixbuf, final_path, &save_error)) {
+                            g_printerr("Fehler beim Speichern als PDF: %s\n", save_error ? save_error->message : "Unbekannt");
+                            if (save_error) g_error_free(save_error);
+                        } else {
+                            g_print("PDF erfolgreich gespeichert: %s\n", final_path);
+                        }
+                        g_object_unref(pixbuf);
+                        g_free(final_path);
+                        continue;
+                    } else {
+                        g_printerr("Unbekanntes Bildformat für Datei %s\n", final_path);
+                        g_object_unref(pixbuf);
+                        g_free(final_path);
+                        continue;
+                    }
+                }
+
+                if (!gdk_pixbuf_save(pixbuf, final_path, format, &save_error, NULL)) {
+                    g_printerr("Fehler beim Speichern von %s: %s\n", final_path, save_error->message);
+                    g_error_free(save_error);
+                } else {
+                    g_print("Datei erfolgreich gespeichert: %s\n", final_path);
+                }
+
+                g_free(final_path);
+            }
+
+            g_object_unref(pixbuf);
         }
 
-        g_free(final_out_path);
+        if (tiff)
+            TIFFClose(tiff);
+
+        g_print("Konvertierung abgeschlossen: %s\n", output_path);
     }
-
-    magic_close(magic_cookie);
-    return failed_files;
 }
 void free_out_file(gpointer data) {
     convertJobFile *file = (convertJobFile*) data;
     //g_free((gpointer)file->outFilePath);
-    //g_list_free_full(file->inJobFiles,free_inJobFile);
+   //g_list_free_full(file->inJobFiles,free_inJobFile);
 }
 void* run_convert_files(void* data){
-
-    GList *convert_job_list = group_convert_jobs(convert_file_paths);
-    printJobOverview(convert_job_list);
-    GList *failed = process_convert_jobs(convert_job_list,(UIInfo*)data);
-    if (failed) {
-        // Fehlerliste ausgeben oder verarbeiten
-        g_list_free_full(failed, g_free);
-    }
-    free_convert_jobs(convert_job_list);
-
+    GList *preview_groups = group_convert_jobs(convert_file_paths);
+    printConvertJobFileList(preview_groups);
+    //perform_conversion_jobs(preview_groups);
+    g_list_free_full(preview_groups, (GDestroyNotify)free_convert_job_file);
 
     g_list_free_full(convert_file_paths, free_out_file);
     convert_file_paths = NULL;
-
-    gtk_widget_set_visible(GTK_WIDGET(((UIInfo*)data)->window),false);
     return NULL;
 }
-
 void convert_files(GtkWidget* main_window) {
     if (!convert_file_paths) {
         g_print(_("Keine Dateien zum Konvertieren vorhanden.\n"));
         return;
     }
-
+    
     GtkWidget* progress_window = gtk_window_new();
-    gtk_window_set_title(GTK_WINDOW(progress_window), _("Umwandlungsprozess"));
-    gtk_window_set_default_size(GTK_WINDOW(progress_window), 100, 100);
-    GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_window_set_child(GTK_WINDOW(progress_window), vbox);
-
-    GtkWidget* spacer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_hexpand(spacer, TRUE);
-    gtk_widget_set_vexpand(spacer, TRUE);
-    gtk_box_append(GTK_BOX(vbox), spacer);
-    // Progress Bar
-    GtkWidget* progressBar = gtk_progress_bar_new();
-    gtk_box_append(GTK_BOX(vbox), progressBar);
-
-    // Spacer
-    GtkWidget* spacer2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_hexpand(spacer2, TRUE);
-    gtk_widget_set_vexpand(spacer2, TRUE);
-    gtk_box_append(GTK_BOX(vbox), spacer2);
-
-    // Label
-    GtkWidget* label = gtk_label_new(_("hi"));
-    gtk_box_append(GTK_BOX(vbox), label);
-
-    // Spacer
-    GtkWidget* spacer3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_hexpand(spacer3, TRUE);
-    gtk_widget_set_vexpand(spacer3, TRUE);
-    gtk_box_append(GTK_BOX(vbox), spacer3);
-
-    UIInfo *ui = g_new0(UIInfo, 1);
-    ui->bar = GTK_PROGRESS_BAR(progressBar);
-    ui->label = GTK_LABEL(label);
-    ui->window = GTK_WINDOW(progress_window);
-
+    gtk_window_set_title(GTK_WINDOW(progress_window),_("Umwandlungs prozess"));
     // Wichtig: Blockiere Interaktion mit dem Hauptfenster
     gtk_window_set_modal(GTK_WINDOW(progress_window), TRUE);
     gtk_window_set_transient_for(GTK_WINDOW(progress_window), GTK_WINDOW(main_window));
-    gtk_widget_set_visible(progress_window, TRUE);
+    gtk_widget_set_visible(progress_window,true);
 
-    gtk_window_set_deletable(GTK_WINDOW(progress_window), FALSE);
-
-    
     pthread_t thread;
-    pthread_create(&thread, NULL, run_convert_files, ui);
+    pthread_create(&thread, NULL, run_convert_files, NULL);
     pthread_detach(thread);
     computed_file_paths=g_list_copy(convert_file_paths);
     
-
+    gtk_widget_set_visible(progress_window,false);
 }
 void delete_selected_rows() {
     GList *selected_rows = gtk_list_box_get_selected_rows(GTK_LIST_BOX(choosed_files_listbox));
@@ -895,12 +746,6 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
     g_object_unref(dialog);
 }
 
-void on_add_file_and_clear_list_clicked(GtkButton *button, gpointer user_data){
-
-    clear_lists();
-    on_add_file_clicked(button,user_data);
-}
-
 gchar* replace_extension(int page, const gchar *filepath, const gchar *new_ext) {
     gchar *dirname = g_path_get_dirname(filepath);
     gchar *basename = g_path_get_basename(filepath);
@@ -940,15 +785,11 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
                 out->outFilePath = new_path;
                 out->inFilePath = g_strdup(inf->filepath); // Kopie des alten Pfads
                 out->max_pages=inf->pages;
-
                 uint32_t* pages = new uint32_t[inf->pages];
-                out->numPages=0;
                 for(uint32_t i = 0 ; i <= inf->pages;i++){
                     pages[i]=i;
-                    out->numPages=out->numPages+1;
                 }
                 out->pages=pages;
-
                 convert_file_paths = g_list_append(convert_file_paths, out);
             }
             else {
@@ -963,7 +804,6 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
                     out->max_pages=inf->pages;
                     uint32_t *pages=new uint32_t[1];
                     pages[0]=i;
-                    out->numPages=1;
                     out->pages=pages;
                     convert_file_paths = g_list_append(convert_file_paths, out);
                 }
@@ -1045,11 +885,6 @@ GtkWidget *create_menu_bar(GtkApplication *app, GtkWidget *window) {
     g_signal_connect(add_immatge_action, "activate", G_CALLBACK(on_add_file_clicked), window);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(add_immatge_action));
 
-    GSimpleAction *add_imatge_and_clear_list_action = g_simple_action_new("addImageAndClearList", NULL);
-    g_signal_connect(add_imatge_and_clear_list_action, "activate", G_CALLBACK(on_add_file_and_clear_list_clicked), window);
-    g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(add_imatge_and_clear_list_action));
-
-
     const gchar *accels[] = { "F11", NULL };
     gtk_application_set_accels_for_action(app, "app.toggle-fullscreen", accels);
 
@@ -1063,7 +898,6 @@ GtkWidget *create_menu_bar(GtkApplication *app, GtkWidget *window) {
     GMenu *file_menu = g_menu_new();
 
     g_menu_append(file_menu, _("Bild Hinzufügen"), "app.addImage");
-    g_menu_append(file_menu, _("Bild Hinzufügen und Liste löschen"), "app.addImageAndClearList");
     g_menu_append(file_menu, _("Ausgewälte Entfernen"), "app.remove-seleckted");
     g_menu_append(file_menu, _("Schließen"), "app.quit");
 
@@ -1222,14 +1056,12 @@ void on_activate(GtkApplication *app, gpointer user_data) {
                      }), NULL);
 
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(remove_seleckted_action));
-    const gchar *accels[] = {"BackSpace", "Delete", NULL };
+    const gchar *accels[] = {"<Ctrl>r", NULL };
     gtk_application_set_accels_for_action(app, "app.remove-seleckted", accels);
 
 
     gtk_widget_set_hexpand(choosed_files_listbox, TRUE);
-    GtkWidget* choosed_files_listbox_scroller = gtk_scrolled_window_new ();
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(choosed_files_listbox_scroller),choosed_files_listbox);
-    gtk_box_append(GTK_BOX(hbox), choosed_files_listbox_scroller);
+    gtk_box_append(GTK_BOX(hbox), choosed_files_listbox);
     g_object_set_data(G_OBJECT(window), "choosed-files", choosed_files_listbox);
 
     GtkWidget *vtoolBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -1266,9 +1098,7 @@ void on_activate(GtkApplication *app, gpointer user_data) {
 
 
     computed_files_listbox = gtk_list_box_new();
-    GtkWidget* computed_files_listbox_scroller = gtk_scrolled_window_new ();
-    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(computed_files_listbox_scroller),computed_files_listbox);
-    gtk_box_append(GTK_BOX(hbox), computed_files_listbox_scroller);
+    gtk_box_append(GTK_BOX(hbox), computed_files_listbox);
     gtk_widget_set_hexpand(computed_files_listbox, TRUE);
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(computed_files_listbox),GTK_SELECTION_MULTIPLE);
 
