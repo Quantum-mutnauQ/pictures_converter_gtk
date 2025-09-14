@@ -16,8 +16,8 @@
   <project_license>GPL-2.0-only</project_license>
   
    <description>
-    <p></p>
-    <p xml:lang="de"></p>
+    <p>Converting image formats</p>
+    <p xml:lang="de">Umwandlung von Bildformaten.</p>
    </description>
 
 <launchable type="desktop-id">io.github.quantum_mutnauq.pictures_converter_gtk.desktop</launchable>
