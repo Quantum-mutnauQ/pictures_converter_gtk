@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Pictures Converter
 Name[de]=Bilderumwandler
-Comment=Pictures Converter converts the formats of Pictures
-Comment[de]=………
+Comment=Converting image formats.
+Comment[de]=Umwandlung von Bildformaten.
 Exec=@EXEC_COMMAND@
 Icon=@ICON_NAME@
 Terminal=false
