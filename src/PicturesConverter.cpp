@@ -1,4 +1,7 @@
 #include <gtk/gtk.h>
+#ifdef USE_ADWAITA
+#include <adwaita.h>
+#endif
 #include <libintl.h>
 #include <locale.h>
 #include <libconfig.h>
@@ -1198,6 +1201,11 @@ void on_activate(GtkApplication *app, gpointer user_data) {
                         window, "fullscreened",
                         G_SETTINGS_BIND_DEFAULT);
     }
+
+#ifdef USE_ADWAITA
+    AdwStyleManager* styleManager =adw_style_manager_get_default();
+    adw_style_manager_set_color_scheme(styleManager,ADW_COLOR_SCHEME_DEFAULT);
+#endif
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
