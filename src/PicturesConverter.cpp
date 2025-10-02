@@ -86,40 +86,19 @@ void on_check_button_toggled(GtkCheckButton *toggle_button, gpointer user_data) 
     gboolean active = gtk_check_button_get_active(toggle_button);
     ((inFile*) user_data)->selected =active;
 }
+
 // Handler für Doppelklick auf das Bild
-static void on_image_double_click(GtkGestureClick *gesture,
-                                  int n_press,
-                                  double x,
-                                  double y,
-                                  gpointer user_data)
-{
+static void on_image_double_click(GtkGestureClick *gesture, int n_press, double x, double y, gpointer user_data){
     if (n_press == 2) { // Doppelclick
         const gchar *filepath = (const gchar *)user_data;
         if (filepath && g_file_test(filepath, G_FILE_TEST_EXISTS)){
+            GFile* file = g_file_new_for_path(filepath);
+            GtkFileLauncher* file_launcher = gtk_file_launcher_new(file);
 
-            GError *error = NULL;
+            gtk_file_launcher_open_containing_folder(file_launcher, NULL, NULL, NULL, file);
 
-            /* Nautilus‑AppInfo holen (Standard‑Dateimanager) */
-            GAppInfo *app = g_app_info_get_default_for_type ("inode/directory", FALSE);
-            if (!app) {
-                g_warning (_("Kein Standard‑Dateimanager gefunden"));
-                return;
-            }
-
-            /* GFile für den Ordner erzeugen */
-            GFile *folder = g_file_new_for_path (filepath);
-            GList *files = g_list_append (NULL, folder);
-
-            /* Launch */
-            if (!g_app_info_launch (app, files, NULL, &error)) {
-                g_warning (_("Start fehlgeschlagen: %s"), error->message);
-                g_error_free (error);
-            }
-
-            /* Aufräumen */
-            g_object_unref (folder);
-            g_list_free (files);
-            g_object_unref (app);
+            g_object_unref(file_launcher);
+            g_object_unref(file);
         }
     }
 }
@@ -694,7 +673,7 @@ void free_out_file(gpointer data) {
 void* run_convert_files(void* data){
 
     GList *convert_job_list = group_convert_jobs(convert_file_paths);
-    //printJobOverview(convert_job_list);
+    printJobOverview(convert_job_list);
     GList *failed = process_convert_jobs(convert_job_list,(UIInfo*)data);
     if (failed) {
         // Fehlerliste ausgeben oder verarbeiten
