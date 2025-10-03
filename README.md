@@ -14,6 +14,8 @@ The TIFF and PDF formats can contain multiple pages. These pages are converted i
 
 <img width="721" height="273" alt="Screenshot Light Theme1" src="https://github.com/user-attachments/assets/77c6297c-1e5a-4712-82b1-bdab1d417c6e" />
 
+## Getting Started
+
 There are two installation methods available for you to choose from:
 
 **1. Install via [Flatpak on Flathub](https://flathub.org/apps/io.github.quantum_mutnauq.pictures_converter_gtk)**
