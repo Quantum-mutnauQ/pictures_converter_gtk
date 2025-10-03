@@ -677,7 +677,7 @@ void free_out_file(gpointer data) {
 void* run_convert_files(void* data){
 
     GList *convert_job_list = group_convert_jobs(convert_file_paths);
-    printJobOverview(convert_job_list);
+    //printJobOverview(convert_job_list);
     GList *failed = process_convert_jobs(convert_job_list,(UIInfo*)data);
     if (failed) {
         // Fehlerliste ausgeben oder verarbeiten

@@ -5,8 +5,8 @@
   <name>Pictures Converter</name>
   <name xml:lang="de">Bilderumwandler</name>
 
-  <summary>Converting image formats.</summary>
-  <summary xml:lang="de">Umwandlung von Bildformaten.</summary>
+  <summary>Converting image formats</summary>
+  <summary xml:lang="de">Umwandlung von Bildformaten</summary>
 
   <developer id="io.github.quantum_mutnauq.pictures_converter_gtk">
     <name>Quantum_mutnauQ</name>
@@ -66,13 +66,13 @@
 <releases>
   <release version="1" date="2024-06-01">
     <description>
-      Version 1
+      <p>Version 1</p>
       <p>The first version from the Pictures Converter</p>
     </description>
   </release>
 </releases>
 
-<translation type="gettext">gnome-builder</translation>
+<translation type="gettext">PicturesConverter</translation>
 
 <custom>
     <value key="flathub::manifest">https://github.com/flathub/io.github.quantum_mutnauq.pictures_converter_gtk/blob/master/io.github.quantum_mutnauq.pictures_converter_gtk.yml</value>
