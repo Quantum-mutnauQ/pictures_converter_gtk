@@ -1,5 +1,7 @@
 #include "PicturesConverter.h"
-
+#ifdef USE_ADWAITA
+#include <adwaita.h>
+#endif
 
 GtkWidget *choosed_files_listbox;
 GtkWidget *computed_files_listbox;
@@ -229,6 +231,7 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
     GtkWindow *parent_window = GTK_WINDOW(user_data);
     GtkFileDialog *dialog = gtk_file_dialog_new();
     gtk_file_dialog_set_title(dialog, _("Datei auswälen"));
+    gtk_file_dialog_set_modal(dialog,true);
 
     // Create a filter for images, TIFF, and PDF
     GtkFileFilter *filter = gtk_file_filter_new();
