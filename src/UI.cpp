@@ -1,5 +1,7 @@
 #include "PicturesConverter.h"
-
+#ifdef USE_ADWAITA
+#include <adwaita.h>
+#endif
 
 GtkWidget *choosed_files_listbox;
 GtkWidget *computed_files_listbox;

@@ -1,6 +1,3 @@
-#ifdef USE_ADWAITA
-#include <adwaita.h>
-#endif
 #include <pthread.h>
 #include "PicturesConverter.h"
 
