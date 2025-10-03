@@ -16,8 +16,14 @@
   <project_license>GPL-2.0-only</project_license>
   
    <description>
-    <p>Converting image formats</p>
-    <p xml:lang="de">Umwandlung von Bildformaten.</p>
+    <p>The image converter is a program that allows users to convert various file formats through a graphical interface. With this program, the following formats can be converted into all supported formats: </p>
+    <p xml:lang="de">Der Bildkonvert ist ein Programm, mit dem an verschieden Dateiformate mit einer grafischen Oberfläche umwandeln kann. Mit dem Programm können folgende Format in alle angebotenen Formate um wandel werden:</p>
+    <p>JPG, PNG, TIFF, and PDF</p>
+    <p xml:lang="de">jpg, png, tiff und pdf</p>
+    <p>Users can select images from different directories. By double-clicking, the program automatically navigates to the directory where the image is stored. After selecting the new format (using the buttons in the middle), the files are converted into the desired format. They are saved in the same directory from which they were selected.</p>
+    <p xml:lang="de">Es können aus verschiedenen Verzeichnisse Bilder ausgewählt werden. Durch ein doppelklickt springt man automatisch in das Verzeichnis, in dem das Bild gespeichert ist. Nach der Auswahl des neuen Formates (Schaltflächen in der Mitte) werden die Dateien in das gewünschte Format gewandelt. Sie werden im selben Verzeichnis abgelegt, aus dem sie ausgewählt wurden.</p>
+    <p>The TIFF and PDF formats can contain multiple pages. These pages are converted into separate files with sequential numbering.</p>
+    <p xml:lang="de">Die tiff und pdf Formate können mehrere Seite beinhalten. Diese werden mit eine nachlaufenden Nummer in einzelne Formate gewandelt.</p>
    </description>
 
 <launchable type="desktop-id">io.github.quantum_mutnauq.pictures_converter_gtk.desktop</launchable>

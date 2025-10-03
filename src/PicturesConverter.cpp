@@ -11,6 +11,10 @@
 #include <cairo-pdf.h>
 #include <pthread.h>
 
+
+#define PICTURES_CONVERTER_VERSION "1"
+
+
 struct inFile{
     gchar *filepath;
     bool selected;
@@ -239,12 +243,12 @@ const char* check_file_type(const char *filename) {
     // Initialisiere die magic-Bibliothek
     magic = magic_open(MAGIC_MIME_TYPE);
     if (magic == NULL) {
-        fprintf(stderr, "Fehler beim Initialisieren von magic.\n");
+        fprintf(stderr, _("Fehler beim Initialisieren von magic.\n"));
         return NULL;
     }
 
     if (magic_load(magic, NULL) != 0) {
-        fprintf(stderr, "Fehler beim Laden der magic-Daten: %s\n", magic_error(magic));
+        fprintf(stderr, _("Fehler beim Laden der magic-Daten: %s\n"), magic_error(magic));
         magic_close(magic);
         return NULL;
     }
@@ -252,7 +256,7 @@ const char* check_file_type(const char *filename) {
     // Bestimme den Dateityp
     type = magic_file(magic, filename);
     if (type == NULL) {
-        fprintf(stderr, "Fehler beim Bestimmen des Dateityps: %s\n", magic_error(magic));
+        fprintf(stderr, _("Fehler beim Bestimmen des Dateityps: %s\n"), magic_error(magic));
         magic_close(magic);
         return NULL;
     }
@@ -260,7 +264,7 @@ const char* check_file_type(const char *filename) {
     // Dupliziere den String, um sicherzustellen, dass er nicht verändert wird
     char *type_copy = strdup(type);
     if (type_copy == NULL) {
-        fprintf(stderr, "Fehler beim Duplizieren des Dateityps.\n");
+        fprintf(stderr, _("Fehler beim Duplizieren des Dateityps.\n"));
         magic_close(magic);
         return NULL;
     }
@@ -377,13 +381,13 @@ void printJobOverview(GList *convertJobFiles) {
     for (convertJobFileIter = convertJobFiles; convertJobFileIter != NULL; convertJobFileIter = g_list_next(convertJobFileIter)) {
         struct convertJobFile *convertJobFile = (struct convertJobFile *)convertJobFileIter->data;
 
-        g_print("Output File: %s\n", convertJobFile->outFilePath);
+        g_print(_("Output File: %s\n")), convertJobFile->outFilePath);
 
         for (inJobFileIter = convertJobFile->inJobFiles; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
             struct inJobFile *inJobFile = (struct inJobFile *)inJobFileIter->data;
 
-            g_print("  Input File: %s\n", inJobFile->inFilePath);
-            g_print("    Pages: ");
+            g_print(_("  Input File: %s\n")), inJobFile->inFilePath);
+            g_print(_("    Pages: "));
             for (uint32_t i = 0; i < inJobFile->numPages; i++) {
                 g_print("%u ", inJobFile->pages[i]);
             }
@@ -969,9 +973,9 @@ void on_close_request(GtkWidget *widget, gpointer data) {
 void on_about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
     GtkWidget *about_dialog = gtk_about_dialog_new();
     gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(about_dialog), "PicturesConverter");
-    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), "1");
-    //gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(about_dialog), _("Fast Reader helps you read quickly by displaying only one word at a time"));
-    //gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(about_dialog), "https://github.com/Quantum-mutnauQ/Pictures-converter");
+    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), )PICTURES_CONVERTER_VERSION;
+    gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(about_dialog), _("Converting image formats."));
+    gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(about_dialog), "https://github.com/Quantum-mutnauQ/pictures_converter_gtk");
     gtk_about_dialog_set_license_type(GTK_ABOUT_DIALOG(about_dialog), GTK_LICENSE_GPL_2_0);
 
 #ifdef ICON_NAME
@@ -986,8 +990,6 @@ void on_about_activate(GSimpleAction *action, GVariant *parameter, gpointer user
     };
     gtk_about_dialog_set_authors(GTK_ABOUT_DIALOG(about_dialog), authors);
 
-    //const char *translators = "albanobattistella";
-    //gtk_about_dialog_set_translator_credits(GTK_ABOUT_DIALOG(about_dialog), translators);
 
     const char *documenters[] = {
         "Quaste42",

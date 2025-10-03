@@ -1,3 +1,127 @@
+
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Error while writing file.\n"
+msgstr "Fehler beim Schreiben der Datei.\n"
+
+msgid "Error while reading file: %s:%d - %s\n"
+msgstr "Fehler beim Lesen der Datei: %s:%d - %s\n"
+
+msgid "Trye to corrct\n"
+msgstr "Versuche zu korrigieren\n"
+
+msgid "Fehler beim Initialisieren von magic.\n"
+msgstr "Fehler beim Initialisieren von magic.\n"
+
+msgid "Fehler beim Laden der magic-Daten: %s\n"
+msgstr "Fehler beim Laden der magic-Daten: %s\n"
+
+msgid "Fehler beim Bestimmen des Dateityps: %s\n"
+msgstr "Fehler beim Bestimmen des Dateityps: %s\n"
+
+msgid "Fehler beim Duplizieren des Dateityps.\n"
+msgstr "Fehler beim Duplizieren des Dateityps.\n"
+
+msgid "Output File: %s\n"
+msgstr "Ausgabedatei: %s\n"
+
+msgid "  Input File: %s\n"
+msgstr "  Eingabedatei: %s\n"
+
+msgid "    Pages: "
+msgstr "    Seiten: "
+
+msgid "Keine Dateien zum Konvertieren vorhanden.\n"
+msgstr "Keine Dateien zum Konvertieren vorhanden.\n"
+
+msgid "Umwandlungsprozess"
+msgstr "Umwandlungsprozess"
+
+msgid "hi"
+msgstr "Hallo"
+
+msgid "Fehler beim Öffnen der PDF-Datei: %s\n"
+msgstr "Fehler beim Öffnen der PDF-Datei: %s\n"
+
+msgid "Fehler beim Öffnen der TIFF-Datei: %s\n"
+msgstr "Fehler beim Öffnen der TIFF-Datei: %s\n"
+
+msgid "Datei auswälen"
+msgstr "Datei auswählen"
+
+msgid "Erlaubte Dateien"
+msgstr "Erlaubte Dateitypen"
+
+msgid "Converting image formats."
+msgstr "Bildformate werden konvertiert."
+
+msgid "Bild Hinzufügen"
+msgstr "Bild hinzufügen"
+
+msgid "Bild Hinzufügen und Liste löschen"
+msgstr "Bild hinzufügen und Liste löschen"
+
+msgid "Ausgewälte Entfernen"
+msgstr "Ausgewählte entfernen"
+
+msgid "Alle Entfernen"
+msgstr "Alle entfernen"
+
+msgid "Schließen"
+msgstr "Schließen"
+
+msgid "Datei"
+msgstr "Datei"
+
+msgid "Vollbild"
+msgstr "Vollbild"
+
+msgid "Ansicht"
+msgstr "Ansicht"
+
+msgid "Über"
+msgstr "Über"
+
+msgid "Hilfe"
+msgstr "Hilfe"
+
+msgid "Icon mit standart Namen gefunden.\n"
+msgstr "Icon mit standart Namen gefunden.\n"
+
+msgid "Icon nicht gefunden.\n"
+msgstr "Icon nicht gefunden.\n"
+
+msgid "ICON_NAME ist definiert: %s\n"
+msgstr "ICON_NAME ist definiert: %s\n"
+
+msgid "Pictures Converter"
+msgstr "Bilderumwandler"
+
+msgid "Füge Dateien hinzu"
+msgstr "Dateien hinzufügen"
+
+msgid "PNG"
+msgstr "PNG"
+
+msgid "JPG"
+msgstr "JPG"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "TIFF"
+msgstr "TIFF"
+
+msgid "von"
+msgstr "von"
+
+msgid "zu"
+msgstr "zu"
+
+msgid "Konnte das Standard-Konfigurationsverzeichnis nicht abrufen.\n"
+msgstr "Konnte das Standard-Konfigurationsverzeichnis nicht abrufen.\n"
+
+msgid "Fehler beim Erstellen des Verzeichnisses PicturesConverter.\n"
+msgstr "Fehler beim Erstellen des Verzeichnisses PicturesConverter.\n"
