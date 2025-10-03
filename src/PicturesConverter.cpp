@@ -381,12 +381,12 @@ void printJobOverview(GList *convertJobFiles) {
     for (convertJobFileIter = convertJobFiles; convertJobFileIter != NULL; convertJobFileIter = g_list_next(convertJobFileIter)) {
         struct convertJobFile *convertJobFile = (struct convertJobFile *)convertJobFileIter->data;
 
-        g_print(_("Output File: %s\n")), convertJobFile->outFilePath);
+        g_print(_("Output File: %s\n"), convertJobFile->outFilePath);
 
         for (inJobFileIter = convertJobFile->inJobFiles; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
             struct inJobFile *inJobFile = (struct inJobFile *)inJobFileIter->data;
 
-            g_print(_("  Input File: %s\n")), inJobFile->inFilePath);
+            g_print(_("  Input File: %s\n"), inJobFile->inFilePath);
             g_print(_("    Pages: "));
             for (uint32_t i = 0; i < inJobFile->numPages; i++) {
                 g_print("%u ", inJobFile->pages[i]);
@@ -973,7 +973,7 @@ void on_close_request(GtkWidget *widget, gpointer data) {
 void on_about_activate(GSimpleAction *action, GVariant *parameter, gpointer user_data) {
     GtkWidget *about_dialog = gtk_about_dialog_new();
     gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(about_dialog), "PicturesConverter");
-    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), )PICTURES_CONVERTER_VERSION;
+    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_dialog), PICTURES_CONVERTER_VERSION);
     gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(about_dialog), _("Converting image formats."));
     gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(about_dialog), "https://github.com/Quantum-mutnauQ/pictures_converter_gtk");
     gtk_about_dialog_set_license_type(GTK_ABOUT_DIALOG(about_dialog), GTK_LICENSE_GPL_2_0);
