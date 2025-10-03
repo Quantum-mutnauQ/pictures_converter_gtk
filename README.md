@@ -7,10 +7,12 @@ The TIFF and PDF formats can contain multiple pages. These pages are converted i
  ## Screenshots
 ***Dark Theme:***
 
+<img width="721" height="273" alt="Screenshot Dark Theme 1" src="https://github.com/user-attachments/assets/66dc0c1b-af8c-43c2-b6c0-f38bbc7f068b" />
 
 
 ***Light Theme:***
 
+<img width="721" height="273" alt="Screenshot Light Theme1" src="https://github.com/user-attachments/assets/77c6297c-1e5a-4712-82b1-bdab1d417c6e" />
 
 There are two installation methods available for you to choose from:
 
