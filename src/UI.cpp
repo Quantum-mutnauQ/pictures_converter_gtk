@@ -245,29 +245,69 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
 
     gtk_file_dialog_open_multiple(dialog, parent_window, NULL,
                                   (GAsyncReadyCallback)+[](GObject *source_object, GAsyncResult *res, gpointer user_data) {
-                                      GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
-                                      GtkWindow *parent = GTK_WINDOW(user_data);
+                                     GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
+                                     GtkWindow *parent = GTK_WINDOW(user_data);
 
-                                      GListModel *files = gtk_file_dialog_open_multiple_finish(dialog, res, NULL);
-                                      if (!files) return;
+                                     GListModel *files = gtk_file_dialog_open_multiple_finish(dialog, res, NULL);
+                                     if (!files) return;
 
-                                      guint n_files = g_list_model_get_n_items(files);
-                                      for (guint i = 0; i < n_files; i++) {
-                                          GFile *file = G_FILE(g_list_model_get_item(files, i));
-                                          gchar *path = g_file_get_path(file);
-                                          if (path) {
-                                              // Nur hinzufügen, wenn Datei noch nicht in der Liste ist
-                                              if (true) {
-                                                  add_file(path);
-                                              }
-                                              g_free(path);
-                                          }
-                                          g_object_unref(file);
-                                      }
-                                      refresh_coosedlistbox(choosed_file_paths);
-                                      refresh_computedlistbox(computed_file_paths);
+                                     guint n_files = g_list_model_get_n_items(files);
+                                     for (guint i = 0; i < n_files; i++) {
+                                         GFile *file = G_FILE(g_list_model_get_item(files, i));
+                                         gchar *path = g_file_get_path(file);
+                                         gchar *uri = NULL;
+                                         if (!path) uri = g_file_get_uri(file);
 
-                                      g_object_unref(files);
+                                         const gchar *used_path = NULL;
+                                         gchar *tmp_path = NULL;
+                                         if (path) {
+                                             used_path = path;
+                                         } else if (uri) {
+                                             // Versuche URI -> Pfad (funktioniert für file:// URIs)
+                                             GError *uerr = NULL;
+                                             tmp_path = g_filename_from_uri(uri, NULL, &uerr);
+                                             if (tmp_path) {
+                                                 used_path = tmp_path;
+                                             } else {
+                                                 g_printerr("URI->Pfad fehlgeschlagen: %s\n", uerr ? uerr->message : "unknown");
+                                                 g_clear_error(&uerr);
+                                                 // Als Fallback: arbeite direkt mit URI (z.B. g_file_read)
+                                                 used_path = uri;
+                                             }
+                                         }
+
+                                         if (used_path) {
+                                             // Ordner ermitteln
+                                             gchar *dir = g_path_get_dirname(used_path);
+                                             // Hier: sofort nach Ordnerzugriff fragen — einfacher Weg: versuche die Datei zu öffnen (g_file_read) -> wenn erfolgreich, hast du Zugriff
+                                             GError *read_err = NULL;
+                                             GFileInputStream *stream = g_file_read(file, NULL, &read_err);
+                                             if (stream) {
+                                                 g_print("Zugriff bestätigt auf Datei: %s\n", used_path);
+                                                 g_input_stream_close(G_INPUT_STREAM(stream), NULL, NULL);
+                                                 g_object_unref(stream);
+
+                                                 // Beispiel: füge Datei zur internen Liste hinzu und starte Konvertierung
+                                                 add_file(used_path);
+                                                 // convert_pdf_to_tiff(used_path); // optional: direkt konvertieren
+                                             } else {
+                                                 g_printerr("Kein Zugriff auf Datei %s: %s\n", used_path, read_err ? read_err->message : "unknown");
+                                                 g_clear_error(&read_err);
+                                                 // Optional: zeige eine Meldung oder versuche Portal-spezifische Logik
+                                             }
+
+                                             g_free(dir);
+                                         }
+
+                                         g_free(tmp_path);
+                                         g_free(path);
+                                         g_free(uri);
+                                         g_object_unref(file);
+                                     }
+
+                                     refresh_coosedlistbox(choosed_file_paths);
+                                     refresh_computedlistbox(computed_file_paths);
+                                     g_object_unref(files);
                                   },
                                   parent_window);
 
