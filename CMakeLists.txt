@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 project(PicturesConverter VERSION 1.0)
 
 # Setze den Standard-C++-Standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
@@ -25,7 +25,7 @@ else()
     set(EXECUDABLE_NAME "PicturesConverter")
 endif()
 
-add_executable(${EXECUDABLE_NAME} src/PicturesConverter.cpp)
+add_executable(${EXECUDABLE_NAME} src/Converter.cpp src/FileManager.cpp src/PicturesConverter.cpp src/UI.cpp src/Config.cpp)
 
 if(FLATPAK_BUILD AND NOT FLATPAK_ID)
     message(FATAL_ERROR "FLATPAK_ID must be set!")
