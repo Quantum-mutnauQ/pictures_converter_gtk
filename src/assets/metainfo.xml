@@ -53,8 +53,12 @@
 
 <screenshots>
   <screenshot type="default">
-    <caption>startpage</caption>
-    <image>https://github.com/user-attachments/assets/6de4cee5-b628-42c4-bea0-ede9130b102d</image>
+    <caption>Dark Theme</caption>
+    <image>https://github.com/user-attachments/assets/66dc0c1b-af8c-43c2-b6c0-f38bbc7f068b</image>
+  </screenshot>
+  <screenshot type="default">
+    <caption>Light Theme</caption>
+    <image>https://github.com/user-attachments/assets/77c6297c-1e5a-4712-82b1-bdab1d417c6e</image>
   </screenshot>
 </screenshots>
 
