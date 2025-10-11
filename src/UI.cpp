@@ -2,6 +2,7 @@
 #ifdef USE_ADWAITA
 #include <adwaita.h>
 #endif
+GMainLoop *loop = NULL;
 
 GtkWidget *choosed_files_listbox;
 GtkWidget *computed_files_listbox;
@@ -227,10 +228,47 @@ void delete_selected_rows() {
     g_list_free(selected_rows);
     refresh_coosedlistbox(choosed_file_paths);
 }
+
+void on_filechooser_response(GDBusConnection *conn,
+                             const gchar *sender_name,
+                             const gchar *object_path,
+                             const gchar *interface_name,
+                             const gchar *signal_name,
+                             GVariant *parameters,
+                             gpointer user_data) {
+    guint32 response_code;
+    GVariant *results;
+
+    g_variant_get(parameters, "(u@a{sv})", &response_code, &results);
+
+    if (response_code == 0) {
+        // Erfolgreiche Auswahl
+        GVariant *uris = g_variant_lookup_value(results, "uris", G_VARIANT_TYPE_STRING_ARRAY);
+        if (uris) {
+            gsize n_uris;
+            const gchar **uri_list = g_variant_get_strv(uris, &n_uris);
+            for (gsize i = 0; i < n_uris; i++) {
+                g_print("Ausgewählte Datei: %s\n", uri_list[i]);
+            }
+            g_free(uri_list);
+            g_variant_unref(uris);
+        }
+    } else {
+        g_print("Dateiauswahl wurde abgebrochen oder ist fehlgeschlagen.\n");
+    }
+
+    g_variant_unref(results);
+    if (loop)
+        g_main_loop_quit(loop);
+}
+
 void on_add_file_clicked(GtkButton *button, gpointer user_data) {
+
+    /*
     GtkWindow *parent_window = GTK_WINDOW(user_data);
     GtkFileDialog *dialog = gtk_file_dialog_new();
     gtk_file_dialog_set_title(dialog, _("Datei auswälen"));
+    gtk_file_dialog_set_modal(dialog,true);
 
     // Create a filter for images, TIFF, and PDF
     GtkFileFilter *filter = gtk_file_filter_new();
@@ -247,74 +285,108 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
 
     gtk_file_dialog_open_multiple(dialog, parent_window, NULL,
                                   (GAsyncReadyCallback)+[](GObject *source_object, GAsyncResult *res, gpointer user_data) {
-                                     GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
-                                     GtkWindow *parent = GTK_WINDOW(user_data);
+                                      GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
 
-                                     GListModel *files = gtk_file_dialog_open_multiple_finish(dialog, res, NULL);
-                                     if (!files) return;
+                                      GListModel *files = gtk_file_dialog_open_multiple_finish(dialog, res, NULL);
+                                      if (!files) return;
 
-                                     guint n_files = g_list_model_get_n_items(files);
-                                     for (guint i = 0; i < n_files; i++) {
-                                         GFile *file = G_FILE(g_list_model_get_item(files, i));
-                                         gchar *path = g_file_get_path(file);
-                                         gchar *uri = NULL;
-                                         if (!path) uri = g_file_get_uri(file);
+                                      guint n_files = g_list_model_get_n_items(files);
+                                      for (guint i = 0; i < n_files; i++) {
+                                          GFile *file = G_FILE(g_list_model_get_item(files, i));
+                                          gchar *path = g_file_get_path(file);
+                                          if (path) {
+                                              // Nur hinzufügen, wenn Datei noch nicht in der Liste ist
+                                              if (true) {
+                                                  add_file(path);
+                                              }
+                                              g_free(path);
+                                          }
+                                          g_object_unref(file);
+                                      }
+                                      refresh_coosedlistbox(choosed_file_paths);
+                                      refresh_computedlistbox(computed_file_paths);
 
-                                         const gchar *used_path = NULL;
-                                         gchar *tmp_path = NULL;
-                                         if (path) {
-                                             used_path = path;
-                                         } else if (uri) {
-                                             // Versuche URI -> Pfad (funktioniert für file:// URIs)
-                                             GError *uerr = NULL;
-                                             tmp_path = g_filename_from_uri(uri, NULL, &uerr);
-                                             if (tmp_path) {
-                                                 used_path = tmp_path;
-                                             } else {
-                                                 g_printerr("URI->Pfad fehlgeschlagen: %s\n", uerr ? uerr->message : "unknown");
-                                                 g_clear_error(&uerr);
-                                                 // Als Fallback: arbeite direkt mit URI (z.B. g_file_read)
-                                                 used_path = uri;
-                                             }
-                                         }
-
-                                         if (used_path) {
-                                             // Ordner ermitteln
-                                             gchar *dir = g_path_get_dirname(used_path);
-                                             // Hier: sofort nach Ordnerzugriff fragen — einfacher Weg: versuche die Datei zu öffnen (g_file_read) -> wenn erfolgreich, hast du Zugriff
-                                             GError *read_err = NULL;
-                                             GFileInputStream *stream = g_file_read(file, NULL, &read_err);
-                                             if (stream) {
-                                                 g_print("Zugriff bestätigt auf Datei: %s\n", used_path);
-                                                 g_input_stream_close(G_INPUT_STREAM(stream), NULL, NULL);
-                                                 g_object_unref(stream);
-
-                                                 // Beispiel: füge Datei zur internen Liste hinzu und starte Konvertierung
-                                                 add_file(used_path);
-                                                 // convert_pdf_to_tiff(used_path); // optional: direkt konvertieren
-                                             } else {
-                                                 g_printerr("Kein Zugriff auf Datei %s: %s\n", used_path, read_err ? read_err->message : "unknown");
-                                                 g_clear_error(&read_err);
-                                                 // Optional: zeige eine Meldung oder versuche Portal-spezifische Logik
-                                             }
-
-                                             g_free(dir);
-                                         }
-
-                                         g_free(tmp_path);
-                                         g_free(path);
-                                         g_free(uri);
-                                         g_object_unref(file);
-                                     }
-
-                                     refresh_coosedlistbox(choosed_file_paths);
-                                     refresh_computedlistbox(computed_file_paths);
-                                     g_object_unref(files);
+                                      g_object_unref(files);
                                   },
-                                  parent_window);
+                                  NULL);
 
 
     g_object_unref(dialog);
+*/
+    GDBusConnection *connection;
+    GError *error = NULL;
+    GVariant *response = NULL;
+    gchar *handle_token = NULL;
+    gchar *object_path = NULL;
+
+    connection = g_bus_get_sync(G_BUS_TYPE_SESSION, NULL, &error);
+    if (!connection) {
+        g_printerr("Fehler beim Verbinden mit D-Bus: %s\n", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    handle_token = g_strdup_printf("filechooser%d", g_random_int());
+    object_path = g_strdup_printf("/org/freedesktop/portal/desktop/request/%s/%s",
+                                  g_get_user_name(), handle_token);
+
+    // Optionen vorbereiten
+    GVariantBuilder options;
+    g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
+    g_variant_builder_add(&options, "{sv}", "multiple", g_variant_new_boolean(TRUE));
+
+    // D-Bus-Aufruf: FileChooser.OpenFile
+    response = g_dbus_connection_call_sync(
+        connection,
+        "org.freedesktop.portal.Desktop",
+        "/org/freedesktop/portal/desktop",
+        "org.freedesktop.portal.FileChooser",
+        "OpenFile",
+        g_variant_new("(ssa{sv})",
+                      "", // parent_window leer lassen
+                      "Datei auswählen",
+                      &options),
+        NULL,
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        &error
+        );
+
+    if (!response) {
+        g_printerr("Fehler beim Öffnen des FileChoosers: %s\n", error->message);
+        g_error_free(error);
+        g_free(handle_token);
+        g_free(object_path);
+        g_object_unref(connection);
+    }
+    g_variant_unref(response);
+
+    // Signal abonnieren
+    guint signal_id = g_dbus_connection_signal_subscribe(
+        connection,
+        "org.freedesktop.portal.Desktop",
+        "org.freedesktop.portal.Request",
+        "Response",
+        NULL,
+        NULL,
+        G_DBUS_SIGNAL_FLAGS_NONE,
+        on_filechooser_response,
+        NULL,
+        NULL
+        );
+
+    loop = g_main_loop_new(NULL, FALSE);
+    g_print("Bitte Datei auswählen…\n");
+    g_main_loop_run(loop);
+
+    g_dbus_connection_signal_unsubscribe(connection, signal_id);
+    g_main_loop_unref(loop);
+
+
+    g_free(handle_token);
+    g_free(object_path);
+    g_object_unref(connection);
 }
 
 void on_add_file_and_clear_list_clicked(GtkButton *button, gpointer user_data){
