@@ -288,7 +288,6 @@ void on_filechooser_response(GDBusConnection *conn,
             for (gsize i = 0; i < n_uris; i++) {
                 g_print("Ausgewählte Datei: %s\n", uri_list[i]);
 
-                // Datei-Objekt erstellen
                 GFile *file = g_file_new_for_uri(uri_list[i]);
                 GFile *parent = g_file_get_parent(file);
 
@@ -296,12 +295,10 @@ void on_filechooser_response(GDBusConnection *conn,
                     gchar *parent_uri = g_file_get_uri(parent);
                     g_print("Übergeordneter Ordner: %s\n", parent_uri);
 
-                    // Zugriff auf Ordner anfordern (über Document Portal)
-                    request_folder_access(parent_uri);
-
-                    GFile *folder = g_file_new_for_uri(parent_uri);
+                    // 👉 Du brauchst KEIN D-Bus hier:
+                    // Du kannst direkt alle Dateien im Ordner auflisten:
                     GFileEnumerator *enumerator = g_file_enumerate_children(
-                        folder,
+                        parent,
                         "*",
                         G_FILE_QUERY_INFO_NONE,
                         NULL,
@@ -317,12 +314,10 @@ void on_filechooser_response(GDBusConnection *conn,
                     }
 
                     g_object_unref(enumerator);
-                    g_object_unref(folder);
-
-
                     g_free(parent_uri);
                     g_object_unref(parent);
                 }
+
                 g_object_unref(file);
             }
             g_free(uri_list);
