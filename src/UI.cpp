@@ -229,6 +229,44 @@ void delete_selected_rows() {
     refresh_coosedlistbox(choosed_file_paths);
 }
 
+void request_folder_access(const gchar *folder_uri) {
+    GError *error = NULL;
+    GDBusConnection *connection = g_bus_get_sync(G_BUS_TYPE_SESSION, NULL, &error);
+    if (!connection) {
+        g_printerr("Fehler beim Verbinden mit D-Bus (Documents): %s\n", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    // Document Portal aufrufen
+    GVariant *result = g_dbus_connection_call_sync(
+        connection,
+        "org.freedesktop.portal.Documents",
+        "/org/freedesktop/portal/documents",
+        "org.freedesktop.portal.Documents",
+        "AddNamed",  // oder "Add" (je nach gewünschtem Verhalten)
+        g_variant_new("(ssb)", folder_uri, "", TRUE),
+        NULL,
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        &error
+        );
+
+    if (!result) {
+        g_printerr("Fehler beim Anfordern von Ordnerzugriff: %s\n", error->message);
+        g_error_free(error);
+    } else {
+        gchar *doc_uri = NULL;
+        g_variant_get(result, "(s)", &doc_uri);
+        g_print("Dokumenten-Portal-URI für Ordner: %s\n", doc_uri);
+        g_free(doc_uri);
+        g_variant_unref(result);
+    }
+
+    g_object_unref(connection);
+}
+
 void on_filechooser_response(GDBusConnection *conn,
                              const gchar *sender_name,
                              const gchar *object_path,
@@ -249,6 +287,43 @@ void on_filechooser_response(GDBusConnection *conn,
             const gchar **uri_list = g_variant_get_strv(uris, &n_uris);
             for (gsize i = 0; i < n_uris; i++) {
                 g_print("Ausgewählte Datei: %s\n", uri_list[i]);
+
+                // Datei-Objekt erstellen
+                GFile *file = g_file_new_for_uri(uri_list[i]);
+                GFile *parent = g_file_get_parent(file);
+
+                if (parent) {
+                    gchar *parent_uri = g_file_get_uri(parent);
+                    g_print("Übergeordneter Ordner: %s\n", parent_uri);
+
+                    // Zugriff auf Ordner anfordern (über Document Portal)
+                    request_folder_access(parent_uri);
+
+                    GFile *folder = g_file_new_for_uri(parent_uri);
+                    GFileEnumerator *enumerator = g_file_enumerate_children(
+                        folder,
+                        "*",
+                        G_FILE_QUERY_INFO_NONE,
+                        NULL,
+                        NULL
+                        );
+
+                    while (TRUE) {
+                        GFileInfo *info = g_file_enumerator_next_file(enumerator, NULL, NULL);
+                        if (!info)
+                            break;
+                        g_print("Datei im Ordner: %s\n", g_file_info_get_name(info));
+                        g_object_unref(info);
+                    }
+
+                    g_object_unref(enumerator);
+                    g_object_unref(folder);
+
+
+                    g_free(parent_uri);
+                    g_object_unref(parent);
+                }
+                g_object_unref(file);
             }
             g_free(uri_list);
             g_variant_unref(uris);
