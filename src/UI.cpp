@@ -229,44 +229,6 @@ void delete_selected_rows() {
     refresh_coosedlistbox(choosed_file_paths);
 }
 
-void request_folder_access(const gchar *folder_uri) {
-    GError *error = NULL;
-    GDBusConnection *connection = g_bus_get_sync(G_BUS_TYPE_SESSION, NULL, &error);
-    if (!connection) {
-        g_printerr("Fehler beim Verbinden mit D-Bus (Documents): %s\n", error->message);
-        g_error_free(error);
-        return;
-    }
-
-    // Document Portal aufrufen
-    GVariant *result = g_dbus_connection_call_sync(
-        connection,
-        "org.freedesktop.portal.Documents",
-        "/org/freedesktop/portal/documents",
-        "org.freedesktop.portal.Documents",
-        "AddNamed",  // oder "Add" (je nach gewünschtem Verhalten)
-        g_variant_new("(ssb)", folder_uri, "", TRUE),
-        NULL,
-        G_DBUS_CALL_FLAGS_NONE,
-        -1,
-        NULL,
-        &error
-        );
-
-    if (!result) {
-        g_printerr("Fehler beim Anfordern von Ordnerzugriff: %s\n", error->message);
-        g_error_free(error);
-    } else {
-        gchar *doc_uri = NULL;
-        g_variant_get(result, "(s)", &doc_uri);
-        g_print("Dokumenten-Portal-URI für Ordner: %s\n", doc_uri);
-        g_free(doc_uri);
-        g_variant_unref(result);
-    }
-
-    g_object_unref(connection);
-}
-
 void on_filechooser_response(GDBusConnection *conn,
                              const gchar *sender_name,
                              const gchar *object_path,
@@ -404,6 +366,7 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
     GVariantBuilder options;
     g_variant_builder_init(&options, G_VARIANT_TYPE_VARDICT);
     g_variant_builder_add(&options, "{sv}", "multiple", g_variant_new_boolean(TRUE));
+    g_variant_builder_add(&options, "{sv}", "use-filechooser", g_variant_new_boolean(FALSE));
 
     // D-Bus-Aufruf: FileChooser.OpenFile
     response = g_dbus_connection_call_sync(
