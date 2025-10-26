@@ -1,127 +1,242 @@
-
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
 msgid ""
 msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-10-26 15:03+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 
-msgid "Error while writing file.\n"
-msgstr "Error while writing the file.\n"
-
-msgid "Error while reading file: %s:%d - %s\n"
-msgstr "Error while reading the file: %s:%d - %s\n"
-
-msgid "Trye to corrct\n"
-msgstr "Try to correct it\n"
-
-msgid "Fehler beim Initialisieren von magic.\n"
-msgstr "Error while initializing magic.\n"
-
-msgid "Fehler beim Laden der magic-Daten: %s\n"
-msgstr "Error while loading magic data: %s\n"
-
-msgid "Fehler beim Bestimmen des Dateityps: %s\n"
-msgstr "Error while determining file type: %s\n"
-
-msgid "Fehler beim Duplizieren des Dateityps.\n"
-msgstr "Error while duplicating file type.\n"
-
-msgid "Output File: %s\n"
-msgstr "Output file: %s\n"
-
-msgid "  Input File: %s\n"
-msgstr "  Input file: %s\n"
-
-msgid "    Pages: "
-msgstr "    Pages: "
-
-msgid "Keine Dateien zum Konvertieren vorhanden.\n"
-msgstr "No files available for conversion.\n"
-
-msgid "Umwandlungsprozess"
-msgstr "Conversion process"
-
-msgid "hi"
-msgstr "hi"
-
-msgid "Fehler beim Öffnen der PDF-Datei: %s\n"
-msgstr "Error while opening PDF file: %s\n"
-
-msgid "Fehler beim Öffnen der TIFF-Datei: %s\n"
-msgstr "Error while opening TIFF file: %s\n"
-
-msgid "Datei auswälen"
-msgstr "Select file"
-
-msgid "Erlaubte Dateien"
-msgstr "Allowed files"
-
-msgid "Converting image formats."
-msgstr "Converting image formats."
-
-msgid "Bild Hinzufügen"
-msgstr "Add image"
-
-msgid "Bild Hinzufügen und Liste löschen"
-msgstr "Add image and clear list"
-
-msgid "Ausgewälte Entfernen"
-msgstr "Remove selected"
-
-msgid "Alle Entfernen"
-msgstr "Remove all"
-
-msgid "Schließen"
-msgstr "Close"
-
-msgid "Datei"
-msgstr "File"
-
-msgid "Vollbild"
-msgstr "Fullscreen"
-
-msgid "Ansicht"
-msgstr "View"
-
-msgid "Über"
-msgstr "About"
-
-msgid "Hilfe"
-msgstr "Help"
-
-msgid "Icon mit standart Namen gefunden.\n"
-msgstr "Icon found with standard name.\n"
-
-msgid "Icon nicht gefunden.\n"
-msgstr "Icon not found.\n"
-
-msgid "ICON_NAME ist definiert: %s\n"
-msgstr "ICON_NAME is defined: %s\n"
-
-msgid "Pictures Converter"
-msgstr "Pictures Converter"
-
-msgid "Füge Dateien hinzu"
-msgstr "Add files"
-
-msgid "PNG"
-msgstr "PNG"
-
-msgid "JPG"
-msgstr "JPG"
-
-msgid "PDF"
-msgstr "PDF"
-
-msgid "TIFF"
-msgstr "TIFF"
-
-msgid "von"
-msgstr "from"
-
-msgid "zu"
-msgstr "to"
-
+#: Config.cpp:35
+#, c-format
 msgid "Konnte das Standard-Konfigurationsverzeichnis nicht abrufen.\n"
 msgstr "Could not retrieve default configuration directory.\n"
 
+#: Config.cpp:41
+#, c-format
 msgid "Fehler beim Erstellen des Verzeichnisses PicturesConverter.\n"
 msgstr "Error while creating PicturesConverter directory.\n"
+
+#: Config.cpp:63
+#, c-format
+msgid "Error while writing file.\n"
+msgstr "Error while writing the file.\n"
+
+#: Config.cpp:73
+#, c-format
+msgid "Error while reading file: %s:%d - %s\n"
+msgstr "Error while reading the file: %s:%d - %s\n"
+
+#: Config.cpp:77
+#, c-format
+msgid "Trye to corrct\n"
+msgstr "Try to correct it\n"
+
+#: Converter.cpp:104
+#, c-format
+msgid "Output File: %s\n"
+msgstr "Output file: %s\n"
+
+#: Converter.cpp:109
+#, c-format
+msgid "  Input File: %s\n"
+msgstr "  Input file: %s\n"
+
+#: Converter.cpp:110
+msgid "    Pages: "
+msgstr "    Pages: "
+
+#: FileManager.cpp:10
+#, c-format
+msgid "Failed to create directory: %s, Error: %d"
+msgstr "Failed to create directory: %s, Error: %d"
+
+#: FileManager.cpp:23
+#, c-format
+msgid "Fehler beim Initialisieren von magic.\n"
+msgstr "Error while initializing magic.\n"
+
+#: FileManager.cpp:28
+#, c-format
+msgid "Fehler beim Laden der magic-Daten: %s\n"
+msgstr "Error while loading magic data: %s\n"
+
+#: FileManager.cpp:36
+#, c-format
+msgid "Fehler beim Bestimmen des Dateityps: %s\n"
+msgstr "Error while determining file type: %s\n"
+
+#: FileManager.cpp:44
+#, c-format
+msgid "Fehler beim Duplizieren des Dateityps.\n"
+msgstr "Error while duplicating file type.\n"
+
+#: FileManager.cpp:111
+#, c-format
+msgid "Fehler beim Öffnen der PDF-Datei: %s\n"
+msgstr "Error while opening PDF file: %s\n"
+
+#: FileManager.cpp:128
+#, c-format
+msgid "Fehler beim Öffnen der TIFF-Datei: %s\n"
+msgstr "Error while opening TIFF file: %s\n"
+
+#: FileManager.cpp:176
+msgid "Umgewandelt"
+msgstr "Converted"
+
+#: FileManager.cpp:252
+msgid "Ziel Ordner Auswählen"
+msgstr "Select target folder"
+
+#: UI.cpp:141
+#, c-format
+msgid ""
+"Original Datei: %s\n"
+"Umgewandelnde Datei: %s"
+msgstr ""
+"Original file: %s\n"
+"Converted file: %s"
+
+#: UI.cpp:159
+msgid "Keine Dateien zum Konvertieren vorhanden.\n"
+msgstr "No files available for conversion.\n"
+
+#: UI.cpp:164
+msgid "Umwandlungsprozess"
+msgstr "Conversion process"
+
+#: UI.cpp:184
+msgid "hi"
+msgstr "Hello"
+
+#: UI.cpp:236
+msgid "Datei auswälen"
+msgstr "Select file"
+
+#: UI.cpp:241
+msgid "Erlaubte Dateien"
+msgstr "Allowed files"
+
+#: UI.cpp:307 UI.cpp:448
+msgid "Einstellungen"
+msgstr "Settings"
+
+#: UI.cpp:319
+msgid "Speicherpfad:"
+msgstr "Storage Path:"
+
+#: UI.cpp:323
+msgid "Da wo das Quellbild sich befindet"
+msgstr "Location of the source image"
+
+#: UI.cpp:324
+msgid "In den Bilderordner in einem Unterordner namens \"Umgewandelt\""
+msgstr "In the images folder in a subfolder named "Converted""
+
+#: UI.cpp:325
+msgid "Jendes mal fragen"
+msgstr "Ask each time"
+
+#: UI.cpp:329
+msgid "Wo das Quellbild sich befindet (Benötigt \"filesystem=host\" zugirff)"
+msgstr "Where the source image is located (Requires \"filesystem=host\" access)"
+
+#: UI.cpp:368
+msgid "Converting image formats."
+msgstr "Converting image formats."
+
+#: UI.cpp:444
+msgid "Bild Hinzufügen"
+msgstr "Add image"
+
+#: UI.cpp:445
+msgid "Bild Hinzufügen und Liste löschen"
+msgstr "Add image and clear list"
+
+#: UI.cpp:446 UI.cpp:485
+msgid "Ausgewälte Entfernen"
+msgstr "Remove selected"
+
+#: UI.cpp:447 UI.cpp:486
+msgid "Alle Entfernen"
+msgstr "Remove all"
+
+#: UI.cpp:449
+msgid "Schließen"
+msgstr "Close"
+
+#: UI.cpp:451
+msgid "Datei"
+msgstr "File"
+
+#: UI.cpp:456
+msgid "Vollbild"
+msgstr "Fullscreen"
+
+#: UI.cpp:457
+msgid "Ansicht"
+msgstr "View"
+
+#: UI.cpp:462
+msgid "Über"
+msgstr "About"
+
+#: UI.cpp:463
+msgid "Hilfe"
+msgstr "Help"
+
+#: UI.cpp:529
+msgid "Icon mit standart Namen gefunden.\n"
+msgstr "Icon found with standard name.\n"
+
+#: UI.cpp:531
+msgid "Icon nicht gefunden.\n"
+msgstr "Icon not found.\n"
+
+#: UI.cpp:534
+#, c-format
+msgid "ICON_NAME ist definiert: %s\n"
+msgstr "ICON_NAME is defined: %s\n"
+
+#: UI.cpp:565
+msgid "Pictures Converter"
+msgstr "Pictures Converter"
+
+#: UI.cpp:593
+msgid "Füge Dateien hinzu"
+msgstr "Add files"
+
+#: UI.cpp:641
+msgid "PNG"
+msgstr "PNG"
+
+#: UI.cpp:644
+msgid "JPG"
+msgstr "JPG"
+
+#: UI.cpp:647
+msgid "PDF"
+msgstr "PDF"
+
+#: UI.cpp:650
+msgid "TIFF"
+msgstr "TIFF"
+
+#: UI.cpp:688
+msgid "von"
+msgstr "from"
+
+#: UI.cpp:696
+msgid "zu"
+msgstr "to"

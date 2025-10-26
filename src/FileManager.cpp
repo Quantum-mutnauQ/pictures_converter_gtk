@@ -3,7 +3,16 @@
 #include <poppler/glib/poppler.h> // Für PDF
 #include <tiffio.h> // Für TIFF
 
-
+gboolean ensure_directory_exists(gchar *directory_path) {
+    if (!g_file_test(directory_path, G_FILE_TEST_IS_DIR)) {
+        uint reult = g_mkdir_with_parents(directory_path, 0755);
+        if (reult != 0) {
+            g_warning(_("Failed to create directory: %s, Error: %d"), directory_path,reult);
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
 const char* check_file_type(const char *filename) {
     magic_t magic;
     const char *type;
@@ -143,7 +152,7 @@ void clear_lists() {
     refresh_coosedlistbox(choosed_file_paths);
     refresh_computedlistbox(computed_file_paths);
 }
-gchar* replace_extension(int page, const gchar *filepath, const gchar *new_ext) {
+gchar* replace_extension_and_path(int page, const gchar *filepath, const gchar *new_ext,const gchar *new_file_path) {
     gchar *dirname = g_path_get_dirname(filepath);
     gchar *basename = g_path_get_basename(filepath);
     gchar *dot = strrchr(basename, '.');
@@ -160,6 +169,19 @@ gchar* replace_extension(int page, const gchar *filepath, const gchar *new_ext) 
         new_filename = g_strconcat(basename, ".", new_ext, NULL);
     }
 
+    if (destinationDiretryType == PicturesFolder) {
+        g_free(dirname);
+        const gchar *pictures_dir = g_get_user_special_dir(G_USER_DIRECTORY_PICTURES);
+        dirname = g_strdup(pictures_dir);
+        gchar *umgewandelt_dir = g_build_filename(dirname, _("Umgewandelt"), NULL);
+        g_free(dirname);
+        dirname = umgewandelt_dir;
+    }else if(destinationDiretryType == AskForFolder){
+        g_free(dirname);
+        dirname= g_strdup(new_file_path);
+    }
+
+
     gchar *new_path = g_build_filename(dirname, new_filename, NULL);
     g_free(dirname);
     g_free(basename);
@@ -167,7 +189,7 @@ gchar* replace_extension(int page, const gchar *filepath, const gchar *new_ext) 
 
     return new_path;
 }
-void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
+void convert_checked_files_to_stage2(const gchar *new_ext,GtkWidget *window,const gchar *new_file_path){
     GList *to_remove = NULL;
 
     for (GList *l = choosed_file_paths; l != NULL; l = l->next) {
@@ -175,11 +197,13 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
         if (inf->selected) {
             if(g_strcmp0(new_ext, "tiff") == 0 || g_strcmp0(new_ext, "pdf") == 0){
                 // Dateipfad mit neuer Extension
-                gchar *new_path = replace_extension(0,inf->filepath, new_ext);
+                gchar *new_path = replace_extension_and_path(0,inf->filepath, new_ext,new_file_path);
+                gchar *new_uneqe_path=ensure_unique_filename(new_path);
+                g_free(new_path);
 
                 // outFile erstellen
                 outFile *out = g_new(outFile, 1);
-                out->outFilePath = new_path;
+                out->outFilePath = new_uneqe_path;
                 out->inFilePath = g_strdup(inf->filepath); // Kopie des alten Pfads
                 out->max_pages=inf->pages;
 
@@ -196,11 +220,13 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
             else {
                 for(uint32_t i = 0 ; i <= inf->pages;i++){
                     // Dateipfad mit neuer Extension
-                    gchar *new_path = replace_extension(i,inf->filepath, new_ext);
+                    gchar *new_path = replace_extension_and_path(i,inf->filepath, new_ext,new_file_path);
+                    gchar *new_uneqe_path=ensure_unique_filename(new_path);
+                    g_free(new_path);
 
                     // outFile erstellen
                     outFile *out = g_new(outFile, 1);
-                    out->outFilePath = new_path;
+                    out->outFilePath = new_uneqe_path;
                     out->inFilePath = g_strdup(inf->filepath); // Kopie des alten Pfads
                     out->max_pages=inf->pages;
                     uint32_t *pages=new uint32_t[1];
@@ -216,8 +242,35 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
     }
 
     convert_files(window);
+}
+void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
+    if(destinationDiretryType == SourceFolder || destinationDiretryType == PicturesFolder){
+        convert_checked_files_to_stage2(new_ext,window,NULL);
 
-    refresh_coosedlistbox(choosed_file_paths);
-    refresh_computedlistbox(computed_file_paths);
+    }else if (destinationDiretryType == AskForFolder){
+        GtkFileDialog *dialog = gtk_file_dialog_new();
+        gtk_file_dialog_set_title(dialog, _("Ziel Ordner Auswählen"));
+        gtk_file_dialog_set_modal(dialog, TRUE);
+
+        FilechooserNewPathWindow *parameter = new FilechooserNewPathWindow;
+        parameter->window = window;
+        parameter->new_file_ext = new_ext;
+
+        gtk_file_dialog_select_folder(dialog, GTK_WINDOW(window), NULL,
+                                      (GAsyncReadyCallback)[] (GObject *source_object, GAsyncResult *res, gpointer user_data) {
+                                          GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
+                                          GFile *file = gtk_file_dialog_select_folder_finish(dialog, res, NULL);
+                                          if (!file) return;
+                                          FilechooserNewPathWindow *parameter = (FilechooserNewPathWindow *)user_data;
+
+                                          convert_checked_files_to_stage2(parameter->new_file_ext, parameter->window, g_file_get_path(file));
+                                          g_object_unref(file);
+                                          g_free(parameter);
+                                      },
+                                      (gpointer)parameter);
+
+        g_object_unref(dialog);
+
+    }
 }
 

@@ -160,6 +160,19 @@ static gboolean render_pdf_page_to_surface(const gchar *pdf_path, guint page_num
     g_object_unref(doc);
     return TRUE;
 }
+gboolean update_on_idle(gpointer data) {
+    UIInfoTransver *ui = (UIInfoTransver*) data;
+    if (ui) {
+        GtkLabel* label = ui->uIInfo->label;
+        GtkProgressBar* progressBar = ui->uIInfo->bar;
+
+        gtk_progress_bar_set_fraction(progressBar,(double)ui->processed_jobs / (double)ui->total_jobs);
+        gtk_label_set_text(label, ui->outFilePath);
+        g_free(ui);
+
+    }
+    return G_SOURCE_REMOVE;
+}
 
 // Hauptkonvertierungsfunktion
 GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
@@ -167,36 +180,47 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
     magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
     magic_load(magic_cookie, NULL);
 
-    GtkLabel* label = info->label;
-    GtkProgressBar* progressBar = info->bar;
     int total_jobs = g_list_length(convert_job_list);
     int processed_jobs = 0;
 
     for (GList *job_iter = convert_job_list; job_iter != NULL; job_iter = job_iter->next) {
         struct convertJobFile *job = (struct convertJobFile *)job_iter->data;
-        gchar *final_out_path = ensure_unique_filename(job->outFilePath);
-        gtk_label_set_text(label, final_out_path);
+
         processed_jobs++;
-        gtk_progress_bar_set_fraction(progressBar,(double)processed_jobs / (double)total_jobs);
+
+        UIInfoTransver *uiTransver = g_new0(UIInfoTransver, 1);
+
+        uiTransver->processed_jobs=processed_jobs;
+        uiTransver->outFilePath=job->outFilePath;
+        uiTransver->uIInfo=info;
+        uiTransver->total_jobs=total_jobs;
+        g_idle_add(update_on_idle, uiTransver);
 
 
         gboolean job_success = TRUE;
+        gchar* out_directory_path = g_path_get_dirname(job->outFilePath);
+        if(!ensure_directory_exists(out_directory_path)){
+            job_success = FALSE;
+            g_free(out_directory_path);
+            break;
+        }
+        g_free(out_directory_path);
 
         // Multiside-Handling abhängig vom Zieltyp
         const char *mime_type = magic_file(magic_cookie, job->outFilePath);
-        gboolean is_tiff_out = g_str_has_suffix(final_out_path, ".tiff") || g_str_has_suffix(final_out_path, ".tif");
-        gboolean is_pdf_out = g_str_has_suffix(final_out_path, ".pdf");
+        gboolean is_tiff_out = g_str_has_suffix(job->outFilePath, ".tiff") || g_str_has_suffix(job->outFilePath, ".tif");
+        gboolean is_pdf_out = g_str_has_suffix(job->outFilePath, ".pdf");
 
         TIFF *tiff_out = NULL;
         cairo_surface_t *pdf_surface = NULL;
         cairo_t *pdf_cr = NULL;
         if (is_tiff_out) {
-            tiff_out = TIFFOpen(final_out_path, "w8");
+            tiff_out = TIFFOpen(job->outFilePath, "w8");
             if (!tiff_out) {
                 job_success = FALSE;
             }
         } else if (is_pdf_out) {
-            pdf_surface = cairo_pdf_surface_create(final_out_path, 595, 842); // A4 Standardgröße
+            pdf_surface = cairo_pdf_surface_create(job->outFilePath, 595, 842); // A4 Standardgröße
             pdf_cr = cairo_create(pdf_surface);
         }
 
@@ -336,11 +360,12 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
                     cairo_paint(pdf_cr);
                     cairo_show_page(pdf_cr);
                 } else {
-                    cairo_surface_write_to_png(surf, final_out_path);
+                    cairo_surface_write_to_png(surf, job->outFilePath);
                 }
 
                 cairo_surface_destroy(surf);
             }
+
         }
 
         // Ausgabedateien schließen
@@ -349,10 +374,9 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
         if (pdf_surface) cairo_surface_destroy(pdf_surface);
 
         if (!job_success) {
-            failed_files = g_list_append(failed_files, g_strdup(final_out_path));
+            failed_files = g_list_append(failed_files, g_strdup(job->outFilePath));
         }
 
-        g_free(final_out_path);
     }
 
     magic_close(magic_cookie);
@@ -360,10 +384,28 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
 }
 
 void free_out_file(gpointer data) {
-    convertJobFile *file = (convertJobFile*) data;
+    //g_free(data);
     //g_free((gpointer)file->outFilePath);
     //g_list_free_full(file->inJobFiles,free_inJobFile);
 }
+gboolean idle_refresh(gpointer data) {
+    computed_file_paths=g_list_copy(convert_file_paths);
+    g_list_free_full(convert_file_paths, free_out_file);
+    convert_file_paths = NULL;
+
+    refresh_coosedlistbox(choosed_file_paths);
+    refresh_computedlistbox(computed_file_paths);
+    return G_SOURCE_REMOVE;         // einmalig ausführen
+}
+gboolean idle_close_ui_and_free(gpointer data) {
+    UIInfo *ui = (UIInfo*) data;
+    if (ui) {
+        if (ui->window) gtk_window_close(GTK_WINDOW(ui->window));
+        g_free(ui);
+    }
+    return G_SOURCE_REMOVE;
+}
+
 void* run_convert_files(void* data){
 
     GList *convert_job_list = group_convert_jobs(convert_file_paths);
@@ -371,14 +413,13 @@ void* run_convert_files(void* data){
     GList *failed = process_convert_jobs(convert_job_list,(UIInfo*)data);
     if (failed) {
         // Fehlerliste ausgeben oder verarbeiten
-        g_list_free_full(failed, g_free);
+       g_list_free_full(failed, g_free);
     }
     free_convert_jobs(convert_job_list);
 
+    g_idle_add(idle_refresh, NULL);
 
-    g_list_free_full(convert_file_paths, free_out_file);
-    convert_file_paths = NULL;
+    g_idle_add(idle_close_ui_and_free, data);
 
-    gtk_widget_set_visible(GTK_WIDGET(((UIInfo*)data)->window),false);
     return NULL;
 }

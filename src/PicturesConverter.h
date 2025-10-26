@@ -37,9 +37,28 @@ typedef struct {
     GtkWindow      *window;
 } UIInfo;
 
+typedef struct {
+    UIInfo *uIInfo;
+    int total_jobs;
+    int processed_jobs;
+    const gchar *outFilePath;
+} UIInfoTransver;
+
+struct FilechooserNewPathWindow{
+    GtkWidget *window;
+    const char* new_file_ext;
+};
+
+enum TagedDitrectory{
+    SourceFolder,
+    PicturesFolder,
+    AskForFolder,
+};
+
 inline GList *choosed_file_paths = NULL;
 inline GList *convert_file_paths=NULL;
 inline GList *computed_file_paths = NULL;
+inline TagedDitrectory destinationDiretryType = PicturesFolder;
 
 //FileManager
 gboolean is_multiside_format(const gchar *filename);
@@ -47,6 +66,7 @@ gchar *ensure_unique_filename(const gchar *path);
 void add_file(const gchar *filepath);
 void clear_lists();
 void convert_checked_files_to(const gchar *new_ext,GtkWidget *window);
+gboolean ensure_directory_exists(gchar *directory_path);
 
 //Ui
 void refresh_computedlistbox(GList *paths);

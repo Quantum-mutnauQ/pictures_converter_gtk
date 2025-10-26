@@ -2,6 +2,7 @@
 #ifdef USE_ADWAITA
 #include <adwaita.h>
 #endif
+GMainLoop *loop = NULL;
 
 GtkWidget *choosed_files_listbox;
 GtkWidget *computed_files_listbox;
@@ -137,7 +138,7 @@ void refresh_computedlistbox(GList *paths) {
         gtk_label_set_xalign(GTK_LABEL(label), 0.0);
         gtk_box_append(GTK_BOX(row), label);
 
-        //gtk_widget_set_tooltip_text(row, g_strdup_printf(_("Original Datei: %s\nWandelnde Datei: %s\nSeite: %d von %d"), out_File->inFilePath, out_File->outFilePath,out_File->pages+1,out_File->max_pages+1));
+        gtk_widget_set_tooltip_text(row, g_strdup_printf(_("Original Datei: %s\nUmgewandelnde Datei: %s"), out_File->inFilePath, out_File->outFilePath));
 
         GtkWidget *list_row = gtk_list_box_row_new();
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(list_row), row);
@@ -159,7 +160,7 @@ void convert_files(GtkWidget* main_window) {
         return;
     }
 
-    GtkWidget* progress_window = gtk_window_new();
+    GtkWidget* progress_window = gtk_application_window_new(gtk_window_get_application(GTK_WINDOW(main_window)));
     gtk_window_set_title(GTK_WINDOW(progress_window), _("Umwandlungsprozess"));
     gtk_window_set_default_size(GTK_WINDOW(progress_window), 100, 100);
     GtkWidget* vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -205,7 +206,7 @@ void convert_files(GtkWidget* main_window) {
     pthread_t thread;
     pthread_create(&thread, NULL, run_convert_files, ui);
     pthread_detach(thread);
-    computed_file_paths=g_list_copy(convert_file_paths);
+
 }
 void delete_selected_rows() {
     GList *selected_rows = gtk_list_box_get_selected_rows(GTK_LIST_BOX(choosed_files_listbox));
@@ -227,6 +228,8 @@ void delete_selected_rows() {
     g_list_free(selected_rows);
     refresh_coosedlistbox(choosed_file_paths);
 }
+
+
 void on_add_file_clicked(GtkButton *button, gpointer user_data) {
     GtkWindow *parent_window = GTK_WINDOW(user_data);
     GtkFileDialog *dialog = gtk_file_dialog_new();
@@ -249,7 +252,6 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
     gtk_file_dialog_open_multiple(dialog, parent_window, NULL,
                                   (GAsyncReadyCallback)+[](GObject *source_object, GAsyncResult *res, gpointer user_data) {
                                       GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
-                                      GtkWindow *parent = GTK_WINDOW(user_data);
 
                                       GListModel *files = gtk_file_dialog_open_multiple_finish(dialog, res, NULL);
                                       if (!files) return;
@@ -272,16 +274,88 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
 
                                       g_object_unref(files);
                                   },
-                                  parent_window);
+                                  NULL);
 
 
     g_object_unref(dialog);
+
 }
 
 void on_add_file_and_clear_list_clicked(GtkButton *button, gpointer user_data){
 
     clear_lists();
     on_add_file_clicked(button,user_data);
+}
+
+void on_radio_button_SourceFolder_toggled(GtkCheckButton *toggle_button, gpointer user_data) {
+    if (gtk_check_button_get_active(toggle_button))
+            destinationDiretryType = SourceFolder;
+}
+void on_radio_button_PicturesFolder_toggled(GtkCheckButton *toggle_button, gpointer user_data) {
+    if (gtk_check_button_get_active(toggle_button))
+        destinationDiretryType = PicturesFolder;
+}
+void on_radio_button_AskForFolder_toggled(GtkCheckButton *toggle_button, gpointer user_data) {
+    if (gtk_check_button_get_active(toggle_button))
+        destinationDiretryType = AskForFolder;
+}
+
+void on_settings_clicked(GSimpleAction *action, GVariant *parameter, gpointer main_window) {
+    GtkApplication *app = gtk_window_get_application(GTK_WINDOW(main_window));
+
+    GtkWidget *settings_window = gtk_application_window_new(app);
+    gtk_window_set_title(GTK_WINDOW(settings_window), _("Einstellungen"));
+    gtk_window_set_default_size(GTK_WINDOW(settings_window), 400, 300);
+
+    gtk_window_set_modal(GTK_WINDOW(settings_window), TRUE);
+    gtk_window_set_transient_for(GTK_WINDOW(settings_window), GTK_WINDOW(main_window));
+    gtk_widget_set_visible(settings_window, TRUE);
+
+    // Create a vertical box to hold the label and radio buttons
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_window_set_child(GTK_WINDOW(settings_window), vbox);
+
+    // Create a label for the title
+    GtkWidget *title_label = gtk_label_new(_("Speicherpfad:"));
+    gtk_box_append(GTK_BOX(vbox), title_label);
+
+    // Create a group for the radio buttons
+    GtkWidget *radio_button1 = gtk_check_button_new_with_label(_("Da wo das Quellbild sich befindet"));
+    GtkWidget *radio_button2 = gtk_check_button_new_with_label(_("In den Bilderordner in einem Unterordner namens \"Umgewandelt\""));
+    GtkWidget *radio_button3 = gtk_check_button_new_with_label(_("Jendes mal fragen"));
+
+
+#ifdef USE_CUSTE_SOURCE_PICURE_TEXT
+    gtk_check_button_set_label(GTK_CHECK_BUTTON(radio_button1),_("Wo das Quellbild sich befindet (Benötigt \"filesystem=host\" zugirff)"));
+#endif
+    // Group the radio buttons
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_button2), GTK_CHECK_BUTTON(radio_button1));
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_button3), GTK_CHECK_BUTTON(radio_button1));
+
+    g_signal_connect(radio_button1, "toggled", G_CALLBACK(on_radio_button_SourceFolder_toggled), radio_button1);
+    g_signal_connect(radio_button2, "toggled", G_CALLBACK(on_radio_button_PicturesFolder_toggled), radio_button2);
+    g_signal_connect(radio_button3, "toggled", G_CALLBACK(on_radio_button_AskForFolder_toggled), radio_button3);
+
+    // Set the active radio button based on the selected_directory_type
+    switch (destinationDiretryType) {
+    case SourceFolder:
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(radio_button1), TRUE);
+        break;
+    case PicturesFolder:
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(radio_button2), TRUE);
+        break;
+    case AskForFolder:
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(radio_button3), TRUE);
+        break;
+    }
+
+    // Add the radio buttons to the vertical box
+    gtk_box_append(GTK_BOX(vbox), radio_button1);
+    gtk_box_append(GTK_BOX(vbox), radio_button2);
+    gtk_box_append(GTK_BOX(vbox), radio_button3);
+
+    // Show all widgets
+    gtk_widget_set_visible(settings_window, true);
 }
 void on_close_request(GtkWidget *widget, gpointer data) {
     save_settings();
@@ -350,6 +424,10 @@ GtkWidget *create_menu_bar(GtkApplication *app, GtkWidget *window) {
     g_signal_connect(add_imatge_and_clear_list_action, "activate", G_CALLBACK(on_add_file_and_clear_list_clicked), window);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(add_imatge_and_clear_list_action));
 
+    GSimpleAction *settings_list_action = g_simple_action_new("settings", NULL);
+    g_signal_connect(settings_list_action, "activate", G_CALLBACK(on_settings_clicked), window);
+    g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(settings_list_action));
+
 
     const gchar *accels[] = { "F11", NULL };
     gtk_application_set_accels_for_action(app, "app.toggle-fullscreen", accels);
@@ -367,6 +445,7 @@ GtkWidget *create_menu_bar(GtkApplication *app, GtkWidget *window) {
     g_menu_append(file_menu, _("Bild Hinzufügen und Liste löschen"), "app.addImageAndClearList");
     g_menu_append(file_menu, _("Ausgewälte Entfernen"), "app.remove-seleckted");
     g_menu_append(file_menu, _("Alle Entfernen"), "app.remove-all");
+    g_menu_append(file_menu, _ ("Einstellungen"), "app.settings");
     g_menu_append(file_menu, _("Schließen"), "app.quit");
 
     GMenuItem *file_item = g_menu_item_new_submenu(_("Datei"), G_MENU_MODEL(file_menu));
