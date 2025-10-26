@@ -3,6 +3,7 @@ Der Bildkonvert ist ein Programm, mit dem an verschieden Dateiformate mit einer 
 jpg, png, tiff, pdf
 Es können aus verschiedenen Verzeichnisse Bilder ausgewählt werden. Durch ein doppelklickt springt man automatisch in das Verzeichnis, in dem das Bild gespeichert ist. Nach der Auswahl des neuen Formates (Schaltflächen in der Mitte) werden die Dateien in das gewünschte Format gewandelt. Sie werden im selben Verzeichnis abgelegt, aus dem sie ausgewählt wurden.
 Die tiff und pdf Formate können mehrere Seite beinhalten. Diese werden mit eine nachlaufenden Nummer in einzelne Formate gewandelt.
+Über die Funktion der Einstellungen, kann entschieden werden, ob die Bilder immer in das Verzeichnis „Bilder/Umgewandelt“, in das Verzeichnis, aus dem es Ursprülich stammt (in der Flatpak Version benötigt das Programm erhöhte Rechte) oder es soll immer nachgefragt werden, wo sie abgelegt werden sollen.
 
  ## Screenshots
 ***Dunkles Thema:***
