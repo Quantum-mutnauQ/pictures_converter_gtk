@@ -24,6 +24,8 @@
     <p xml:lang="de">Es können aus verschiedenen Verzeichnisse Bilder ausgewählt werden. Durch ein doppelklickt springt man automatisch in das Verzeichnis, in dem das Bild gespeichert ist. Nach der Auswahl des neuen Formates (Schaltflächen in der Mitte) werden die Dateien in das gewünschte Format gewandelt. Sie werden im selben Verzeichnis abgelegt, aus dem sie ausgewählt wurden.</p>
     <p>The TIFF and PDF formats can contain multiple pages. These pages are converted into separate files with sequential numbering.</p>
     <p xml:lang="de">Die tiff und pdf Formate können mehrere Seite beinhalten. Diese werden mit eine nachlaufenden Nummer in einzelne Formate gewandelt.</p>
+    <p>In the settings function, users can choose whether images are always saved in the "Pictures/Converted" directory, the original directory from which they came (note that the Flatpak version requires elevated permissions for this), or if the program should always prompt for the desired save location.</p>
+    <p xml:lang="de">Über die Funktion der Einstellungen, kann entschieden werden, ob die Bilder immer in das Verzeichnis „Bilder/Umgewandelt“, in das Verzeichnis, aus dem es Ursprülich stammt (in der Flatpak Version benötigt das Programm erhöhte Rechte) oder es soll immer nachgefragt werden, wo sie abgelegt werden sollen.</p>
    </description>
 
 <launchable type="desktop-id">io.github.quantum_mutnauq.pictures_converter_gtk.desktop</launchable>
