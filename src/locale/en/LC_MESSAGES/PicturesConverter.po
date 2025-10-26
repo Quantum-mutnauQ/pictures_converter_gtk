@@ -137,20 +137,20 @@ msgid "Speicherpfad:"
 msgstr "Storage Path:"
 
 #: UI.cpp:323
-msgid "Da wo das Quellbild sich befindet"
+msgid "Ins Ursprungsverzeichnis"
 msgstr "Location of the source image"
 
 #: UI.cpp:324
-msgid "In den Bilderordner in einem Unterordner namens \"Umgewandelt\""
-msgstr "In the images folder in a subfolder named \"Converted\""
+msgid "In Bilder/Umgewandelt"
+msgstr "In Images/Converted"
 
 #: UI.cpp:325
-msgid "Jendes mal fragen"
-msgstr "Ask each time"
+msgid "Immer Fragen"
+msgstr "Always Ask"
 
 #: UI.cpp:329
-msgid "Wo das Quellbild sich befindet (Benötigt \"filesystem=host\" zugirff)"
-msgstr "Where the source image is located (Requires \"filesystem=host\" access)"
+msgid "Ins Ursprungsverzeichnis (Benötigt \"filesystem=host\" Zugriff)"
+msgstr "Into the source directory (Requires \"filesystem=host\" access)"
 
 #: UI.cpp:368
 msgid "Converting image formats."

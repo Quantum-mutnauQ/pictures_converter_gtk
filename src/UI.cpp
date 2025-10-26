@@ -320,13 +320,13 @@ void on_settings_clicked(GSimpleAction *action, GVariant *parameter, gpointer ma
     gtk_box_append(GTK_BOX(vbox), title_label);
 
     // Create a group for the radio buttons
-    GtkWidget *radio_button1 = gtk_check_button_new_with_label(_("Da wo das Quellbild sich befindet"));
-    GtkWidget *radio_button2 = gtk_check_button_new_with_label(_("In den Bilderordner in einem Unterordner namens \"Umgewandelt\""));
-    GtkWidget *radio_button3 = gtk_check_button_new_with_label(_("Jendes mal fragen"));
+    GtkWidget *radio_button1 = gtk_check_button_new_with_label(_("Ins Ursprungsverzeichnis"));
+    GtkWidget *radio_button2 = gtk_check_button_new_with_label(_("In Bilder/Umgewandelt"));
+    GtkWidget *radio_button3 = gtk_check_button_new_with_label(_("Immer Fragen"));
 
 
 #ifdef USE_CUSTE_SOURCE_PICURE_TEXT
-    gtk_check_button_set_label(GTK_CHECK_BUTTON(radio_button1),_("Wo das Quellbild sich befindet (Benötigt \"filesystem=host\" zugirff)"));
+    gtk_check_button_set_label(GTK_CHECK_BUTTON(radio_button1),_("Ins Ursprungsverzeichnis (Benötigt \"filesystem=host\" Zugriff)"));
 #endif
     // Group the radio buttons
     gtk_check_button_set_group(GTK_CHECK_BUTTON(radio_button2), GTK_CHECK_BUTTON(radio_button1));
