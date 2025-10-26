@@ -3,6 +3,8 @@ The image converter is a program that allows users to convert various file forma
 JPG, PNG, TIFF, and PDF
 Users can select images from different directories. By double-clicking, the program automatically navigates to the directory where the image is stored. After selecting the new format (using the buttons in the middle), the files are converted into the desired format. They are saved in the same directory from which they were selected.
 The TIFF and PDF formats can contain multiple pages. These pages are converted into separate files with sequential numbering.
+In the settings function, users can choose whether images are always saved in the "Pictures/Converted" directory, the original directory from which they came (note that the Flatpak version requires elevated permissions for this), or if the program should always prompt for the desired save location.
+
 
  ## Screenshots
 ***Dark Theme:***
