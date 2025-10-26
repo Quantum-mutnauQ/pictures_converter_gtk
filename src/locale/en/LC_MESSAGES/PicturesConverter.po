@@ -142,7 +142,7 @@ msgstr "Location of the source image"
 
 #: UI.cpp:324
 msgid "In den Bilderordner in einem Unterordner namens \"Umgewandelt\""
-msgstr "In the images folder in a subfolder named "Converted""
+msgstr "In the images folder in a subfolder named \"Converted\""
 
 #: UI.cpp:325
 msgid "Jendes mal fragen"
