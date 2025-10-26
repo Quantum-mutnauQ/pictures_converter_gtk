@@ -66,6 +66,19 @@
 
 
 <releases>
+  <release version="1.1" date="2025-10-26">
+    <description>
+      <p>Version 1.1</p>
+      <p>Added features:</p>
+      <ul>
+            <li>Setting for save location</li>
+      </ul>
+      <p>Dependency update:</p>
+      <ul>
+            <li>Updated Poppler to 25.10.0</li>
+      </ul> 
+    </description>
+  </release>
   <release version="1" date="2025-10-03">
     <description>
       <p>Version 1</p>
