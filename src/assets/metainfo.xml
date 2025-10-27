@@ -73,6 +73,8 @@
       <ul>
             <li>Removed appstream-flathub-manifest-url</li>
       </ul>
+    </description>
+  </release>
   <release version="1.1" date="2025-10-26">
     <description>
       <p>Version 1.1</p>
