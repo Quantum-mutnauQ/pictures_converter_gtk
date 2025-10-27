@@ -66,6 +66,13 @@
 
 
 <releases>
+  <release version="1.2" date="2025-10-27">
+    <description>
+      <p>Version 1.2</p>
+      <p>Other changes:</p>
+      <ul>
+            <li>Removed appstream-flathub-manifest-url</li>
+      </ul>
   <release version="1.1" date="2025-10-26">
     <description>
       <p>Version 1.1</p>
@@ -88,10 +95,6 @@
 </releases>
 
 <translation type="gettext">PicturesConverter</translation>
-
-<custom>
-    <value key="flathub::manifest">https://github.com/flathub/io.github.quantum_mutnauq.pictures_converter_gtk/blob/master/io.github.quantum_mutnauq.pictures_converter_gtk.yml</value>
-</custom>
 </component>
 
 

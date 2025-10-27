@@ -5,7 +5,7 @@
 
 #define _(STRING) gettext(STRING)
 
-#define PICTURES_CONVERTER_VERSION "1.1"
+#define PICTURES_CONVERTER_VERSION "1.2"
 
 
 struct inFile{
