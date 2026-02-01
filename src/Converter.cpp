@@ -175,10 +175,14 @@ gboolean update_on_idle(gpointer data) {
 }
 
 // Hauptkonvertierungsfunktion
-GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
+GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scaling, int kompression, double dpi) {
     GList *failed_files = NULL;
     magic_t magic_cookie = magic_open(MAGIC_MIME_TYPE);
-    magic_load(magic_cookie, NULL);
+    if (!magic_cookie) return failed_files;
+    if (magic_load(magic_cookie, NULL) != 0) {
+        magic_close(magic_cookie);
+        return failed_files;
+    }
 
     int total_jobs = g_list_length(convert_job_list);
     int processed_jobs = 0;
@@ -210,18 +214,30 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
         const char *mime_type = magic_file(magic_cookie, job->outFilePath);
         gboolean is_tiff_out = g_str_has_suffix(job->outFilePath, ".tiff") || g_str_has_suffix(job->outFilePath, ".tif");
         gboolean is_pdf_out = g_str_has_suffix(job->outFilePath, ".pdf");
+        gboolean is_jpg_out = g_str_has_suffix(job->outFilePath, ".jpg");
 
         TIFF *tiff_out = NULL;
         cairo_surface_t *pdf_surface = NULL;
         cairo_t *pdf_cr = NULL;
         if (is_tiff_out) {
             tiff_out = TIFFOpen(job->outFilePath, "w8");
-            if (!tiff_out) {
-                job_success = FALSE;
-            }
+            if (!tiff_out) job_success = FALSE;
         } else if (is_pdf_out) {
-            pdf_surface = cairo_pdf_surface_create(job->outFilePath, 595, 842); // A4 Standardgröße
-            pdf_cr = cairo_create(pdf_surface);
+            pdf_surface = cairo_pdf_surface_create(job->outFilePath, 595, 842);
+            if (cairo_surface_status(pdf_surface) != CAIRO_STATUS_SUCCESS) {
+                job_success = FALSE;
+                if (pdf_surface) cairo_surface_destroy(pdf_surface);
+                pdf_surface = NULL;
+            } else {
+                pdf_cr = cairo_create(pdf_surface);
+                if (cairo_status(pdf_cr) != CAIRO_STATUS_SUCCESS) {
+                    cairo_destroy(pdf_cr);
+                    cairo_surface_destroy(pdf_surface);
+                    pdf_cr = NULL;
+                    pdf_surface = NULL;
+                    job_success = FALSE;
+                }
+            }
         }
 
         for (GList *in_iter = job->inJobFiles; in_iter != NULL && job_success; in_iter = in_iter->next) {
@@ -233,7 +249,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
 
                 // Quelle behandeln
                 if (g_str_has_prefix(in_mime, "application/pdf")) {
-                    if (!render_pdf_page_to_surface(infile->inFilePath, infile->pages[i], 300.0, &surf)) {
+                    if (!render_pdf_page_to_surface(infile->inFilePath, infile->pages[i], dpi, &surf)) {
                         job_success = FALSE;
                         break;
                     }
@@ -297,6 +313,36 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
                     break;
                 }
 
+                if (res_scaling != 100 && surf) {
+                    double scale = res_scaling / 100.0;
+                    int orig_w = cairo_image_surface_get_width(surf);
+                    int orig_h = cairo_image_surface_get_height(surf);
+                    int new_w = (int)(orig_w * scale);
+                    int new_h = (int)(orig_h * scale);
+
+                    /* Neues temporäres Surface in Zielgröße anlegen */
+                    cairo_surface_t *scaled = cairo_image_surface_create(cairo_image_surface_get_format(surf), new_w, new_h);
+                    cairo_t *cr = cairo_create(scaled);
+
+                    if (cairo_surface_status(scaled) != CAIRO_STATUS_SUCCESS) {
+                        cairo_surface_destroy(scaled);
+                        cairo_surface_destroy(surf);
+                        job_success = FALSE;
+                        break;
+                    }
+
+                    /* Die Quelle auf das neue Surface skalieren und zeichnen */
+                    cairo_scale(cr, scale, scale);          /* skaliert Koordinatensystem */
+                    cairo_set_source_surface(cr, surf, 0, 0);
+                    cairo_paint(cr);
+
+                    cairo_destroy(cr);
+                    /* vorhandenes surf ersetzen */
+                    cairo_surface_destroy(surf);
+                    surf = scaled;
+                }
+
+
                 if (is_pdf_out) {
                     /* Bildgröße ermitteln */
                     int w = cairo_image_surface_get_width(surf);
@@ -359,6 +405,43 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info) {
                     cairo_set_source_surface(pdf_cr, surf, 0, 0);
                     cairo_paint(pdf_cr);
                     cairo_show_page(pdf_cr);
+                } else if(is_jpg_out){
+
+                    int w = cairo_image_surface_get_width(surf);
+                    int h = cairo_image_surface_get_height(surf);
+                    int stride = cairo_image_surface_get_stride(surf);
+                    unsigned char *data = cairo_image_surface_get_data(surf);
+
+                    for (int y = 0; y < h; y++) {
+                        uint32_t *row = (uint32_t *)(data + y * stride);
+                        for (int x = 0; x < w; x++) {
+                            uint32_t v = row[x];               // memory: B G R A on little-endian
+                            row[x] = ((v & 0x00FF0000) >> 16) |   // R -> byte0
+                                     (v & 0x0000FF00) |          // G -> byte1
+                                     ((v & 0x000000FF) << 16) |  // B -> byte2
+                                     (v & 0xFF000000);           // A unchanged
+                        }
+                    }
+                    /* Jetzt sicher an GdkPixbuf übergeben (data bleibt gültig solange surf existiert) */
+                    GdkPixbuf *pix = gdk_pixbuf_new_from_data(
+                        data,
+                        GDK_COLORSPACE_RGB,
+                        TRUE,
+                        8,
+                        w, h,
+                        stride,
+                        NULL, NULL);
+
+                    if (pix) {
+                        int quality = CLAMP(kompression, 0, 100);
+                        if (quality == 0) quality = 75;
+
+                        GError *error = NULL;
+
+                        gdk_pixbuf_save(pix, job->outFilePath, "jpeg", &error,"quality", g_strdup_printf("%d", quality), NULL);
+                        g_object_unref(pix);
+                    }else
+                        job_success=FALSE;
                 } else {
                     cairo_surface_write_to_png(surf, job->outFilePath);
                 }
@@ -410,7 +493,7 @@ void* run_convert_files(void* data){
 
     GList *convert_job_list = group_convert_jobs(convert_file_paths);
     //printJobOverview(convert_job_list);
-    GList *failed = process_convert_jobs(convert_job_list,(UIInfo*)data);
+    GList *failed = process_convert_jobs(convert_job_list,(UIInfo*)data,gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(resolution_spin)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(compression_spin)),gtk_spin_button_get_value(GTK_SPIN_BUTTON(dpi_spin)));
     if (failed) {
         // Fehlerliste ausgeben oder verarbeiten
        g_list_free_full(failed, g_free);

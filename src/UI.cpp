@@ -600,7 +600,6 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     choosed_files_listbox = gtk_list_box_new();
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(choosed_files_listbox),GTK_SELECTION_MULTIPLE);
 
-
     GSimpleAction *remove_seleckted_action = g_simple_action_new("remove-seleckted", NULL);
     g_signal_connect(remove_seleckted_action, "activate", G_CALLBACK(+[](
                                                                           GSimpleAction *action,
@@ -635,6 +634,9 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_box_append(GTK_BOX(hbox), choosed_files_listbox_scroller);
     g_object_set_data(G_OBJECT(window), "choosed-files", choosed_files_listbox);
 
+    GtkWidget *buttons_start = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_box_append (GTK_BOX (hbox), buttons_start);
+
     GtkWidget *vtoolBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_append(GTK_BOX(hbox), vtoolBox);
 
@@ -666,6 +668,8 @@ void on_activate(GtkApplication *app, gpointer user_data) {
                          convert_checked_files_to("tiff",GTK_WIDGET(data));
                      }), window);
 
+    GtkWidget *buttons_end = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
+    gtk_box_append (GTK_BOX (hbox), buttons_end);
 
 
     computed_files_listbox = gtk_list_box_new();
@@ -676,7 +680,6 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(computed_files_listbox),GTK_SELECTION_MULTIPLE);
 
     add_popover_menu_to_listbox(choosed_files_listbox);
-
 
     GtkWidget *line_box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_set_hexpand (line_box, TRUE);
@@ -702,9 +705,86 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_widget_set_hexpand (spacer_right, TRUE);
     gtk_box_append (GTK_BOX (line_box), spacer_right);
 
+
+
     gtk_box_append (GTK_BOX (box), line_box);
 
     gtk_box_append (GTK_BOX (box), hbox);
+
+    GtkWidget *seperator_quecksettigs = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_box_append (GTK_BOX (box), seperator_quecksettigs);
+
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 6);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
+    gtk_widget_set_margin_start(grid, 6);
+    gtk_widget_set_margin_end(grid, 6);
+    gtk_widget_set_margin_top(grid, 6);
+    gtk_widget_set_margin_bottom(grid, 6);
+
+    /* Überschrift */
+    GtkWidget *quicksettings_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(quicksettings_label), _("<b>Schnell einstellungen:</b>"));
+    gtk_label_set_xalign(GTK_LABEL(quicksettings_label), 0.0);
+    gtk_grid_attach(GTK_GRID(grid), quicksettings_label, 0, 0, 2, 1);
+
+    /* Auflösung skalieren */
+    GtkWidget *resolution_label = gtk_label_new(_("Auflösung skalieren (%)"));
+    gtk_label_set_xalign(GTK_LABEL(resolution_label), 0.0);
+    gtk_widget_set_margin_start(resolution_label, 10);
+    gtk_grid_attach(GTK_GRID(grid), resolution_label, 0, 1, 1, 1);
+
+    GtkAdjustment *adj_resolution = gtk_adjustment_new(100.0, 1.0, 500.0, 1.0, 10.0, 0.0);
+    resolution_spin = gtk_spin_button_new(adj_resolution, 1.0, 0);
+    gtk_widget_set_hexpand(resolution_spin, FALSE);
+    gtk_grid_attach(GTK_GRID(grid), resolution_spin, 1, 1, 1, 1);
+
+    /* JPG Komprimierung */
+    GtkWidget *JPG_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(JPG_label), _("<b>JPG:</b>"));
+    gtk_label_set_xalign(GTK_LABEL(JPG_label), 0.0);
+    gtk_grid_attach(GTK_GRID(grid), JPG_label, 0, 2, 1, 1);
+
+    GtkWidget *compression_label = gtk_label_new(_("Kompremierung"));
+    gtk_label_set_xalign(GTK_LABEL(compression_label), 0.0);
+    gtk_widget_set_margin_start(compression_label, 10);
+    gtk_grid_attach(GTK_GRID(grid), compression_label, 0, 3, 1, 1);
+
+    GtkAdjustment *adj_compression = gtk_adjustment_new(75.0, 1.0, 100.0, 1.0, 5.0, 0.0);
+    compression_spin = gtk_spin_button_new(adj_compression, 1.0, 0);
+    gtk_widget_set_hexpand(compression_spin, FALSE);
+    gtk_grid_attach(GTK_GRID(grid), compression_spin, 1, 3, 1, 1);
+
+    /* PDF DPI */
+    GtkWidget *PDF_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(PDF_label), _("<b>PDF:</b>"));
+    gtk_label_set_xalign(GTK_LABEL(PDF_label), 0.0);
+    gtk_grid_attach(GTK_GRID(grid), PDF_label, 0, 4, 1, 1);
+
+    GtkWidget *dpi_label = gtk_label_new(_("DPI"));
+    gtk_label_set_xalign(GTK_LABEL(dpi_label), 0.0);
+    gtk_widget_set_margin_start(dpi_label, 10);
+    gtk_grid_attach(GTK_GRID(grid), dpi_label, 0, 5, 1, 1);
+
+    GtkAdjustment *adj_dpi = gtk_adjustment_new(300.0, 72.0, 1200.0, 1.0, 50.0, 0.0);
+    dpi_spin = gtk_spin_button_new(adj_dpi, 1.0, 0);
+    gtk_widget_set_hexpand(dpi_spin, FALSE);
+    gtk_grid_attach(GTK_GRID(grid), dpi_spin, 1, 5, 1, 1);
+
+    /* Reset-Button unter allem (zentrig links) */
+    GtkWidget *reset_button = gtk_button_new_with_label(_("Zurücksetzen"));
+    gtk_widget_set_halign(reset_button, GTK_ALIGN_START);
+    gtk_grid_attach(GTK_GRID(grid), reset_button, 0, 6, 2, 1);
+
+    g_signal_connect(reset_button, "clicked", G_CALLBACK(+[] (GtkButton *btn, gpointer data) {
+                         gtk_spin_button_set_value(GTK_SPIN_BUTTON(resolution_spin),100);
+                         gtk_spin_button_set_value(GTK_SPIN_BUTTON(compression_spin),75);
+                         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dpi_spin),300);
+                     }), NULL);
+
+    gtk_box_append(GTK_BOX(box), grid);
+
+
     load_settings();
 
     g_signal_connect(window, "close-request", G_CALLBACK(on_close_request), NULL);

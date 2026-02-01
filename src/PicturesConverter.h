@@ -5,7 +5,7 @@
 
 #define _(STRING) gettext(STRING)
 
-#define PICTURES_CONVERTER_VERSION "1.2"
+#define PICTURES_CONVERTER_VERSION "1.3"
 
 
 struct inFile{
@@ -59,6 +59,9 @@ inline GList *choosed_file_paths = NULL;
 inline GList *convert_file_paths=NULL;
 inline GList *computed_file_paths = NULL;
 inline TagedDitrectory destinationDiretryType = PicturesFolder;
+inline GtkWidget *resolution_spin;
+inline GtkWidget *compression_spin;
+inline GtkWidget *dpi_spin;
 
 //FileManager
 gboolean is_multiside_format(const gchar *filename);
