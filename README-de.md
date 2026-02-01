@@ -8,12 +8,12 @@ Die tiff und pdf Formate können mehrere Seite beinhalten. Diese werden mit eine
  ## Screenshots
 ***Dunkles Thema:***
 
-<img width="721" height="273" alt="Screenshot Dark Theme 1" src="https://github.com/user-attachments/assets/66dc0c1b-af8c-43c2-b6c0-f38bbc7f068b" />
+<img width="830" height="479" alt="Bildschirmfoto Dunkles Thema" src="https://github.com/user-attachments/assets/77dd7f62-b5de-4a81-80ff-1b640c624882" />
 
 
 ***Helles Thema:***
 
-<img width="721" height="273" alt="Screenshot Light Theme1" src="https://github.com/user-attachments/assets/77c6297c-1e5a-4712-82b1-bdab1d417c6e" />
+<img width="830" height="479" alt="Bildschirmfoto Helles Thema" src="https://github.com/user-attachments/assets/ba959e12-b267-412a-8899-aecade1bbf30" />
 
 ## Erste Schritte
 
