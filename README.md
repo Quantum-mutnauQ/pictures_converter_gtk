@@ -35,10 +35,7 @@ If you prefer to run Pictures Converter from the binary, just follow these simpl
 ## Adding a New Language
 
 1. **Create Files**: Within the "src/locales" folder, create a subfolder named with the short of your language. Inside this folder, create another folder named `LC_MESSAGES`. Then, within this folder, create a file named `PicturesConverter.po`.
-2. **Add Translations to File**: Copy the provided template and modify the English phrases to their equivalents in your language in the PicturesConverter.po file.
-```po
-
- ```
+2. **Add Translations to File**: Download the provided [template](https://github.com/Quantum-mutnauQ/pictures_converter_gtk/blob/main/src/locale/en/LC_MESSAGES/PicturesConverter.po) and modify the English phrases to their equivalents in your language in the PicturesConverter.po file.
 3. **Compile**: Use the `msgfmt` command to compile the language file. For example: `msgfmt src/locale/<YourLanguage>/LC_MESSAGES/PicturesConverter.po -o build/locale/<YourLanguage>/LC_MESSAGES/PicturesConverter.mo`.
 4. **Testing**: Launch Pictures Converter and verify that the new language is working correctly. If any issues arise, please open an issue and provide your `PicturesConverter.po` file and language details.
 5. **Support the Project (Optional)**: Open an issue and share your `PicturesConverter.po` file along with your language details, and we will add it to the project.
