@@ -9,12 +9,14 @@ In the settings function, users can choose whether images are always saved in th
  ## Screenshots
 ***Dark Theme:***
 
-<img width="721" height="273" alt="Screenshot Dark Theme 1" src="https://github.com/user-attachments/assets/66dc0c1b-af8c-43c2-b6c0-f38bbc7f068b" />
+<img width="830" height="479" alt="Screenshot Dark Theme" src="https://github.com/user-attachments/assets/49d3b5d9-8a8f-481d-aff5-97a7c1f915b0" />
+
 
 
 ***Light Theme:***
 
-<img width="721" height="273" alt="Screenshot Light Theme1" src="https://github.com/user-attachments/assets/77c6297c-1e5a-4712-82b1-bdab1d417c6e" />
+<img width="830" height="479" alt="Screenshot Light Theme" src="https://github.com/user-attachments/assets/3f75b58f-668f-4553-94db-28ebcb35efd4" />
+
 
 ## Getting Started
 
