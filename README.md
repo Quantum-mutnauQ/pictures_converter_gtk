@@ -40,7 +40,7 @@ If you prefer to run Pictures Converter from the binary, just follow these simpl
 4. **Testing**: Launch Pictures Converter and verify that the new language is working correctly. If any issues arise, please open an issue and provide your `PicturesConverter.po` file and language details.
 5. **Support the Project (Optional)**: Open an issue and share your `PicturesConverter.po` file along with your language details, and we will add it to the project.
 6. **Add Language Support for CMake (Optional)**: To include support for an additional language, add the following line under the existing `compile_po_files(en)` entry in your CMake configuration: `compile_po_files([your_language_short_name])` After making this change, reconfigure CMake to apply the updates.
-7. 
+
 ## Compiling It Yourself
 ### Build Instructions
 
