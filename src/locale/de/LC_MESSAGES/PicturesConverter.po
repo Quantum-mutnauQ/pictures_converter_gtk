@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-26 15:03+0100\n"
+"POT-Creation-Date: 2026-02-01 18:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,6 +55,11 @@ msgstr "  Eingabedatei: %s\n"
 #: Converter.cpp:110
 msgid "    Pages: "
 msgstr "    Seiten: "
+
+#: Converter.cpp:459
+#, c-format
+msgid "Fehler beim Speichern: %s\n"
+msgstr "Fehler beim Speichern: %s\n"
 
 #: FileManager.cpp:10
 #, c-format
@@ -240,3 +245,47 @@ msgstr "von"
 #: UI.cpp:696
 msgid "zu"
 msgstr "zu"
+
+#: UI.cpp:727
+msgid "<b>Schnell einstellungen:</b>"
+msgstr "<b>Schnell einstellungen:</b>"
+
+#: UI.cpp:732
+msgid "Prozentuale Skalierung der Bildauflösung (z. B. 100 = original)."
+msgstr "Prozentuale Skalierung der Bildauflösung (z. B. 100 = original)."
+
+#: UI.cpp:734
+msgid "Auflösung skalieren (%)"
+msgstr "Auflösung skalieren (%)"
+
+#: UI.cpp:748
+msgid "<b>JPG:</b>"
+msgstr "<b>JPG:</b>"
+
+#: UI.cpp:752
+msgid "JPG-Qualität: höher = bessere Qualität, größere Dateien (1–100)."
+msgstr "JPG-Qualität: höher = bessere Qualität, größere Dateien (1–100)."
+
+#: UI.cpp:754
+msgid "Kompremierung"
+msgstr "Kompremierung"
+
+#: UI.cpp:768
+msgid "<b>PDF:</b>"
+msgstr "<b>PDF:</b>"
+
+#: UI.cpp:772
+msgid ""
+"Scan-Auflösung der PDF in DPI (Dots Per Inch). Höher = schärfer, größere "
+"Dateien."
+msgstr ""
+"Scan-Auflösung der PDF in DPI (Dots Per Inch). Höher = schärfer, größere "
+"Dateien."
+
+#: UI.cpp:774
+msgid "DPI"
+msgstr "DPI"
+
+#: UI.cpp:787
+msgid "Zurücksetzen"
+msgstr "Zurücksetzen"

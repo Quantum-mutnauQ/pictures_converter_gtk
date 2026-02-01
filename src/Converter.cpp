@@ -456,7 +456,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         GError *error = NULL;
 
                         if (!gdk_pixbuf_save(pix, job->outFilePath, "jpeg", &error,"quality", g_strdup_printf("%d", quality), NULL)) {
-                            g_printerr("Fehler beim Speichern: %s\n", error->message);
+                            g_printerr(_("Fehler beim Speichern: %s\n"), error->message);
                             job_success=FALSE;
                             g_error_free(error);
                         }
