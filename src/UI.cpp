@@ -729,15 +729,19 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_grid_attach(GTK_GRID(grid), quicksettings_label, 0, 0, 2, 1);
 
     /* Auflösung skalieren */
+    const char* resolution_tooltip= _("Prozentuale Skalierung der Bildauflösung (z. B. 100 = original).");
+
     GtkWidget *resolution_label = gtk_label_new(_("Auflösung skalieren (%)"));
     gtk_label_set_xalign(GTK_LABEL(resolution_label), 0.0);
     gtk_widget_set_margin_start(resolution_label, 10);
     gtk_grid_attach(GTK_GRID(grid), resolution_label, 0, 1, 1, 1);
+    gtk_widget_set_tooltip_text(resolution_label,resolution_tooltip);
 
     GtkAdjustment *adj_resolution = gtk_adjustment_new(100.0, 1.0, 500.0, 1.0, 10.0, 0.0);
     resolution_spin = gtk_spin_button_new(adj_resolution, 1.0, 0);
     gtk_widget_set_hexpand(resolution_spin, FALSE);
     gtk_grid_attach(GTK_GRID(grid), resolution_spin, 1, 1, 1, 1);
+    gtk_widget_set_tooltip_text(resolution_spin,resolution_tooltip);
 
     /* JPG Komprimierung */
     GtkWidget *JPG_label = gtk_label_new(NULL);
@@ -745,15 +749,19 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_label_set_xalign(GTK_LABEL(JPG_label), 0.0);
     gtk_grid_attach(GTK_GRID(grid), JPG_label, 0, 2, 1, 1);
 
+    const char* compression_tooltip= _("JPG-Qualität: höher = bessere Qualität, größere Dateien (1–100).");
+
     GtkWidget *compression_label = gtk_label_new(_("Kompremierung"));
     gtk_label_set_xalign(GTK_LABEL(compression_label), 0.0);
     gtk_widget_set_margin_start(compression_label, 10);
     gtk_grid_attach(GTK_GRID(grid), compression_label, 0, 3, 1, 1);
+    gtk_widget_set_tooltip_text(compression_label,compression_tooltip);
 
     GtkAdjustment *adj_compression = gtk_adjustment_new(75.0, 1.0, 100.0, 1.0, 5.0, 0.0);
     compression_spin = gtk_spin_button_new(adj_compression, 1.0, 0);
     gtk_widget_set_hexpand(compression_spin, FALSE);
     gtk_grid_attach(GTK_GRID(grid), compression_spin, 1, 3, 1, 1);
+    gtk_widget_set_tooltip_text(compression_spin,compression_tooltip);
 
     /* PDF DPI */
     GtkWidget *PDF_label = gtk_label_new(NULL);
@@ -761,15 +769,19 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_label_set_xalign(GTK_LABEL(PDF_label), 0.0);
     gtk_grid_attach(GTK_GRID(grid), PDF_label, 0, 4, 1, 1);
 
+    const char* dpi_tooltip= _("Scan-Auflösung der PDF in DPI (Dots Per Inch). Höher = schärfer, größere Dateien.");
+
     GtkWidget *dpi_label = gtk_label_new(_("DPI"));
     gtk_label_set_xalign(GTK_LABEL(dpi_label), 0.0);
     gtk_widget_set_margin_start(dpi_label, 10);
     gtk_grid_attach(GTK_GRID(grid), dpi_label, 0, 5, 1, 1);
+    gtk_widget_set_tooltip_text(dpi_label,dpi_tooltip);
 
     GtkAdjustment *adj_dpi = gtk_adjustment_new(300.0, 72.0, 1200.0, 1.0, 50.0, 0.0);
     dpi_spin = gtk_spin_button_new(adj_dpi, 1.0, 0);
     gtk_widget_set_hexpand(dpi_spin, FALSE);
     gtk_grid_attach(GTK_GRID(grid), dpi_spin, 1, 5, 1, 1);
+    gtk_widget_set_tooltip_text(dpi_spin,dpi_tooltip);
 
     /* Reset-Button unter allem (zentrig links) */
     GtkWidget *reset_button = gtk_button_new_with_label(_("Zurücksetzen"));
