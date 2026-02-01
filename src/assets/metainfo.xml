@@ -56,16 +56,31 @@
 <screenshots>
   <screenshot type="default">
     <caption>Dark Theme</caption>
-    <image>https://github.com/user-attachments/assets/66dc0c1b-af8c-43c2-b6c0-f38bbc7f068b</image>
+    <image>https://github.com/user-attachments/assets/49d3b5d9-8a8f-481d-aff5-97a7c1f915b0</image>
   </screenshot>
   <screenshot type="default">
     <caption>Light Theme</caption>
-    <image>https://github.com/user-attachments/assets/77c6297c-1e5a-4712-82b1-bdab1d417c6e</image>
+    <image>https://github.com/user-attachments/assets/3f75b58f-668f-4553-94db-28ebcb35efd4</image>
   </screenshot>
 </screenshots>
 
 
 <releases>
+  <release version="1.3" date="2026-02-01">
+    <description>
+      <p>Version 1.3</p>
+      <p>Features added:</p>
+      <ul>
+            <li>Resolution scaling</li>
+            <li>JPG compression</li>
+            <li>PDF sample rate in DPI</li>
+      </ul>
+      <p>Other changes:</p>
+      <ul>
+            <li>Updated dependencies on Flatpak</li>
+      </ul>
+    </description>
+  </release>
   <release version="1.2" date="2025-10-27">
     <description>
       <p>Version 1.2</p>
