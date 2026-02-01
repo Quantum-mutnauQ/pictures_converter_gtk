@@ -412,25 +412,42 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     int stride = cairo_image_surface_get_stride(surf);
                     unsigned char *data = cairo_image_surface_get_data(surf);
 
+                    /* neues RGB-Puffer: 3 Bytes pro Pixel, tightly packed */
+                    int rgb_stride = w * 3;
+                    guint8 *rgb = g_new(guint8, rgb_stride * h);
+
                     for (int y = 0; y < h; y++) {
                         uint32_t *row = (uint32_t *)(data + y * stride);
+                        guint8 *rrow = rgb + y * rgb_stride;
                         for (int x = 0; x < w; x++) {
-                            uint32_t v = row[x];               // memory: B G R A on little-endian
-                            row[x] = ((v & 0x00FF0000) >> 16) |   // R -> byte0
-                                     (v & 0x0000FF00) |          // G -> byte1
-                                     ((v & 0x000000FF) << 16) |  // B -> byte2
-                                     (v & 0xFF000000);           // A unchanged
+                            uint32_t v = row[x]; // little-endian: B G R A in bytes
+                            guint8 b = (v & 0x000000FF);
+                            guint8 g = (v & 0x0000FF00) >> 8;
+                            guint8 r = (v & 0x00FF0000) >> 16;
+                            /* optional: premultiplied alpha correction, falls cairo premultiplied: */
+                            guint8 a = (v & 0xFF000000) >> 24;
+                            if (a != 0 && a != 255) {
+                                /* Unpremultiply: component = component * 255 / alpha */
+                                r = (guint8)CLAMP((int)(r * 255 / a), 0, 255);
+                                g = (guint8)CLAMP((int)(g * 255 / a), 0, 255);
+                                b = (guint8)CLAMP((int)(b * 255 / a), 0, 255);
+                            }
+                            rrow[x*3 + 0] = r;
+                            rrow[x*3 + 1] = g;
+                            rrow[x*3 + 2] = b;
                         }
                     }
-                    /* Jetzt sicher an GdkPixbuf übergeben (data bleibt gültig solange surf existiert) */
+
+                    /* Pixbuf ohne Alpha */
                     GdkPixbuf *pix = gdk_pixbuf_new_from_data(
-                        data,
+                        rgb,
                         GDK_COLORSPACE_RGB,
-                        TRUE,
+                        FALSE,        /* no alpha */
                         8,
                         w, h,
-                        stride,
-                        NULL, NULL);
+                        rgb_stride,
+                        (GdkPixbufDestroyNotify)g_free,
+                        rgb);
 
                     if (pix) {
                         int quality = CLAMP(kompression, 0, 100);
@@ -438,7 +455,11 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
                         GError *error = NULL;
 
-                        gdk_pixbuf_save(pix, job->outFilePath, "jpeg", &error,"quality", g_strdup_printf("%d", quality), NULL);
+                        if (!gdk_pixbuf_save(pix, job->outFilePath, "jpeg", &error,"quality", g_strdup_printf("%d", quality), NULL)) {
+                            g_printerr("Fehler beim Speichern: %s\n", error->message);
+                            job_success=FALSE;
+                            g_error_free(error);
+                        }
                         g_object_unref(pix);
                     }else
                         job_success=FALSE;

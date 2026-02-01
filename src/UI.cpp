@@ -118,7 +118,7 @@ void refresh_computedlistbox(GList *paths) {
         gtk_widget_add_controller(row, GTK_EVENT_CONTROLLER(img_click));
 
 
-        GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale((const gchar*)out_File->inFilePath, 48, 48, TRUE, NULL);
+        GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale((const gchar*)out_File->outFilePath, 48, 48, TRUE, NULL);
         GtkWidget *image;
 
         if (pixbuf) {
