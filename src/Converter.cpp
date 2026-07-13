@@ -12,6 +12,7 @@ GList *group_convert_jobs(GList *outFiles) {
     GList *outFileIter;
     for (outFileIter = outFiles; outFileIter != NULL; outFileIter = g_list_next(outFileIter)) {
         struct outFile *outFile = (struct outFile *)outFileIter->data;
+        outFile->new_format;
         GList **group = (GList **)g_hash_table_lookup(grouped, outFile->outFilePath);
 
         if (group == NULL) {
@@ -29,22 +30,19 @@ GList *group_convert_jobs(GList *outFiles) {
     g_hash_table_iter_init(&iter, grouped);
     while (g_hash_table_iter_next(&iter, &key, &value)) {
         GList *group = *(GList **)value;
-        gboolean multiside = is_multiside_format(((struct outFile *)group->data)->outFilePath);
+        gboolean multiside = is_multiside_format(((struct outFile *)group->data)->new_format);
 
         if (multiside) {
             // Mehrseitiges Format
             struct convertJobFile *convertJobFile = g_new0(struct convertJobFile, 1);
             convertJobFile->outFilePath = g_strdup((const gchar *)key);
+            convertJobFile->new_format =((struct outFile *)group->data)->new_format;
             convertJobFile->inJobFiles = NULL;
 
             GList *inJobFileIter;
             for (inJobFileIter = group; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
                 struct outFile *outFile = (struct outFile *)inJobFileIter->data;
-                struct inJobFile *inJobFile = g_new0(struct inJobFile, 1);
-                inJobFile->inFilePath = outFile->inFilePath;
-                inJobFile->pages = outFile->pages;
-                inJobFile->numPages=outFile->numPages;
-                convertJobFile->inJobFiles = g_list_append(convertJobFile->inJobFiles, inJobFile);
+                convertJobFile->inJobFiles = g_list_append(convertJobFile->inJobFiles, outFile);
             }
 
             result = g_list_append(result, convertJobFile);
@@ -55,14 +53,9 @@ GList *group_convert_jobs(GList *outFiles) {
                 struct outFile *outFile = (struct outFile *)inJobFileIter->data;
                 struct convertJobFile *convertJobFile = g_new0(struct convertJobFile, 1);
                 convertJobFile->outFilePath = g_strdup((const gchar *)key);
-                convertJobFile->inJobFiles = NULL;
+                convertJobFile->new_format =((struct outFile *)group->data)->new_format;
 
-                struct inJobFile *inJobFile = g_new0(struct inJobFile, 1);
-                inJobFile->inFilePath = outFile->inFilePath;
-                inJobFile->pages = outFile->pages;
-                inJobFile->numPages=outFile->numPages;
-                convertJobFile->inJobFiles = g_list_append(convertJobFile->inJobFiles, inJobFile);
-
+                convertJobFile->inJobFiles = g_list_append(convertJobFile->inJobFiles, outFile);
                 result = g_list_append(result, convertJobFile);
             }
         }
@@ -78,13 +71,6 @@ void free_convert_jobs(GList *convertJobFiles) {
     for (convertJobFileIter = convertJobFiles; convertJobFileIter != NULL; convertJobFileIter = g_list_next(convertJobFileIter)) {
         struct convertJobFile *convertJobFile = (struct convertJobFile *)convertJobFileIter->data;
 
-        // Freigeben der inJobFiles
-        GList *inJobFileIter;
-        for (inJobFileIter = convertJobFile->inJobFiles; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
-            struct inJobFile *inJobFile = (struct inJobFile *)inJobFileIter->data;
-            g_free((void *)inJobFile->pages); // Freigeben des Seitenarrays
-            g_free(inJobFile); // Freigeben der inJobFile-Struktur
-        }
         g_list_free(convertJobFile->inJobFiles); // Freigeben der GList der inJobFiles
 
         // Freigeben des ausgabepfades
@@ -104,7 +90,7 @@ void printJobOverview(GList *convertJobFiles) {
         g_print(_("Output File: %s\n"), convertJobFile->outFilePath);
 
         for (inJobFileIter = convertJobFile->inJobFiles; inJobFileIter != NULL; inJobFileIter = g_list_next(inJobFileIter)) {
-            struct inJobFile *inJobFile = (struct inJobFile *)inJobFileIter->data;
+            struct outFile *inJobFile = (struct outFile *)inJobFileIter->data;
 
             g_print(_("  Input File: %s\n"), inJobFile->inFilePath);
             g_print(_("    Pages: "));
@@ -212,17 +198,14 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
         // Multiside-Handling abhängig vom Zieltyp
         const char *mime_type = magic_file(magic_cookie, job->outFilePath);
-        gboolean is_tiff_out = g_str_has_suffix(job->outFilePath, ".tiff") || g_str_has_suffix(job->outFilePath, ".tif");
-        gboolean is_pdf_out = g_str_has_suffix(job->outFilePath, ".pdf");
-        gboolean is_jpg_out = g_str_has_suffix(job->outFilePath, ".jpg");
 
         TIFF *tiff_out = NULL;
         cairo_surface_t *pdf_surface = NULL;
         cairo_t *pdf_cr = NULL;
-        if (is_tiff_out) {
-            tiff_out = TIFFOpen(job->outFilePath, "w8");
+        if (job->new_format == tiff) {
+            tiff_out = TIFFOpen(job->outFilePath, "w8");struct outFile *source_outfile;
             if (!tiff_out) job_success = FALSE;
-        } else if (is_pdf_out) {
+        } else if (job->new_format == pdf) {
             pdf_surface = cairo_pdf_surface_create(job->outFilePath, 595, 842);
             if (cairo_surface_status(pdf_surface) != CAIRO_STATUS_SUCCESS) {
                 job_success = FALSE;
@@ -241,7 +224,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
         }
 
         for (GList *in_iter = job->inJobFiles; in_iter != NULL && job_success; in_iter = in_iter->next) {
-            struct inJobFile *infile = (struct inJobFile *)in_iter->data;
+            struct outFile *infile = (struct outFile *)in_iter->data;
             const char *in_mime = magic_file(magic_cookie, infile->inFilePath);
 
             for (uint32_t i = 0; i < infile->numPages && job_success; i++) {
@@ -312,7 +295,6 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     job_success = FALSE;
                     break;
                 }
-
                 if (res_scaling != 100 && surf) {
                     double scale = res_scaling / 100.0;
                     int orig_w = cairo_image_surface_get_width(surf);
@@ -342,8 +324,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     surf = scaled;
                 }
 
-
-                if (is_pdf_out) {
+                if (job->new_format == pdf) {
                     /* Bildgröße ermitteln */
                     int w = cairo_image_surface_get_width(surf);
                     int h = cairo_image_surface_get_height(surf);
@@ -352,7 +333,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
 
                 // Ziel behandeln
-                if (is_tiff_out) {
+                if (job->new_format == tiff) {
                     int w = cairo_image_surface_get_width(surf);
                     int h = cairo_image_surface_get_height(surf);
                     unsigned char *data = cairo_image_surface_get_data(surf);
@@ -401,12 +382,11 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
                     g_free(rowbuf);
                     TIFFWriteDirectory(tiff_out);
-                } else if (is_pdf_out) {
+                } else if (job->new_format == pdf) {
                     cairo_set_source_surface(pdf_cr, surf, 0, 0);
                     cairo_paint(pdf_cr);
                     cairo_show_page(pdf_cr);
-                } else if(is_jpg_out){
-
+                } else if(job->new_format == jpg){
                     int w = cairo_image_surface_get_width(surf);
                     int h = cairo_image_surface_get_height(surf);
                     int stride = cairo_image_surface_get_stride(surf);
@@ -469,18 +449,20 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
                 cairo_surface_destroy(surf);
             }
-
+            if (!job_success){
+                FailedJob *failed_job = g_new0(FailedJob, 1);
+                failed_job->outFilePath = infile;
+                failed_job->reason = NULL;
+                failed_files = g_list_append(failed_files, failed_job);
+            }
+            else
+                computed_file_paths = g_list_append(computed_file_paths, infile);
         }
 
         // Ausgabedateien schließen
         if (tiff_out) TIFFClose(tiff_out);
         if (pdf_cr) cairo_destroy(pdf_cr);
         if (pdf_surface) cairo_surface_destroy(pdf_surface);
-
-        if (!job_success) {
-            failed_files = g_list_append(failed_files, g_strdup(job->outFilePath));
-        }
-
     }
 
     magic_close(magic_cookie);
@@ -493,7 +475,6 @@ void free_out_file(gpointer data) {
     //g_list_free_full(file->inJobFiles,free_inJobFile);
 }
 gboolean idle_refresh(gpointer data) {
-    computed_file_paths=g_list_copy(convert_file_paths);
     g_list_free_full(convert_file_paths, free_out_file);
     convert_file_paths = NULL;
 
@@ -504,11 +485,41 @@ gboolean idle_refresh(gpointer data) {
 gboolean idle_close_ui_and_free(gpointer data) {
     UIInfo *ui = (UIInfo*) data;
     if (ui) {
-        if (ui->window) gtk_window_close(GTK_WINDOW(ui->window));
+        if (ui->window)
+            gtk_window_destroy(GTK_WINDOW(ui->window));
         g_free(ui);
     }
     return G_SOURCE_REMOVE;
 }
+
+gboolean idle_show_falured(gpointer data) {
+    UIInfo *ui = (UIInfo*) data;
+    if (!ui || !ui->failed_jobs_buffer) {
+        return G_SOURCE_REMOVE;
+    }
+
+    gtk_label_set_text(ui->label, _("Fehlgeschlagene Datein:"));
+
+    gtk_widget_set_visible(GTK_WIDGET(ui->Close_button), true);
+    gtk_widget_set_visible(GTK_WIDGET(ui->failed_jobs_text_view), true);
+
+    GString *text = g_string_new("");
+
+    for (GList *l = ui->faluredJobs; l != NULL; l = l->next) {
+        FailedJob *job = (FailedJob*) l->data;
+        if (job && job->outFilePath) {
+            g_string_append_printf(text, "%s:\n      %s\n",
+                                   job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "(null)",
+                                   job->reason ? job->reason : "(no reason)");
+        }
+    }
+
+    gtk_text_buffer_set_text(ui->failed_jobs_buffer, text->str, -1);
+    g_string_free(text, TRUE);
+
+    return G_SOURCE_REMOVE;
+}
+
 
 void* run_convert_files(void* data){
 
@@ -517,13 +528,16 @@ void* run_convert_files(void* data){
     GList *failed = process_convert_jobs(convert_job_list,(UIInfo*)data,gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(resolution_spin)),gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(compression_spin)),gtk_spin_button_get_value(GTK_SPIN_BUTTON(dpi_spin)));
     if (failed) {
         // Fehlerliste ausgeben oder verarbeiten
-       g_list_free_full(failed, g_free);
+        UIInfo *ui = (UIInfo*) data;
+        ui->faluredJobs=failed;
+        g_idle_add(idle_show_falured, ui);
+
+    }else {
+        g_idle_add(idle_close_ui_and_free, data);
     }
     free_convert_jobs(convert_job_list);
 
     g_idle_add(idle_refresh, NULL);
-
-    g_idle_add(idle_close_ui_and_free, data);
 
     return NULL;
 }

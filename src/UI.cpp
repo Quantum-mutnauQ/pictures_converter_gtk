@@ -117,7 +117,6 @@ void refresh_computedlistbox(GList *paths) {
 
         gtk_widget_add_controller(row, GTK_EVENT_CONTROLLER(img_click));
 
-
         GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file_at_scale((const gchar*)out_File->outFilePath, 48, 48, TRUE, NULL);
         GtkWidget *image;
 
@@ -129,6 +128,7 @@ void refresh_computedlistbox(GList *paths) {
         } else {
             image = gtk_image_new_from_icon_name("image-missing");
         }
+
 
         gtk_box_append(GTK_BOX(row), image);
 
@@ -184,16 +184,35 @@ void convert_files(GtkWidget* main_window) {
     GtkWidget* label = gtk_label_new(_("hi"));
     gtk_box_append(GTK_BOX(vbox), label);
 
-    // Spacer
-    GtkWidget* spacer3 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_hexpand(spacer3, TRUE);
-    gtk_widget_set_vexpand(spacer3, TRUE);
-    gtk_box_append(GTK_BOX(vbox), spacer3);
+    GtkTextBuffer *failed_job_buffer = gtk_text_buffer_new(NULL);
+
+    GtkWidget *failed_jobs = gtk_text_view_new_with_buffer(failed_job_buffer);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(failed_jobs), FALSE);
+    GtkWidget *scrolled_window = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), failed_jobs);
+    gtk_box_append(GTK_BOX(vbox), scrolled_window);
+    gtk_widget_set_visible(failed_jobs, false);
+
+    gtk_text_buffer_set_text(failed_job_buffer, "hallo", -1);
+
+    GtkWidget *close = gtk_button_new_with_label(_("Schliesen"));
+    gtk_box_append(GTK_BOX(vbox), close);
+    gtk_widget_set_visible(close, false);
+
 
     UIInfo *ui = g_new0(UIInfo, 1);
     ui->bar = GTK_PROGRESS_BAR(progressBar);
     ui->label = GTK_LABEL(label);
     ui->window = GTK_WINDOW(progress_window);
+    ui->Close_button=GTK_BUTTON(close);
+    ui->failed_jobs_buffer=GTK_TEXT_BUFFER(failed_job_buffer);
+    ui->failed_jobs_text_view=GTK_TEXT_VIEW(failed_jobs);
+
+    g_signal_connect(close, "clicked",  G_CALLBACK(+[] (GtkButton *btn, gpointer user_data) {
+                        UIInfo *ui = (UIInfo *)user_data;
+                        gtk_window_destroy(ui->window);
+                        g_free(ui);
+                     }), ui);
 
     // Wichtig: Blockiere Interaktion mit dem Hauptfenster
     gtk_window_set_modal(GTK_WINDOW(progress_window), TRUE);
@@ -202,12 +221,11 @@ void convert_files(GtkWidget* main_window) {
 
     gtk_window_set_deletable(GTK_WINDOW(progress_window), FALSE);
 
-
     pthread_t thread;
     pthread_create(&thread, NULL, run_convert_files, ui);
     pthread_detach(thread);
-
 }
+
 void delete_selected_rows() {
     GList *selected_rows = gtk_list_box_get_selected_rows(GTK_LIST_BOX(choosed_files_listbox));
 
@@ -317,6 +335,7 @@ void on_settings_clicked(GSimpleAction *action, GVariant *parameter, gpointer ma
 
     // Create a label for the title
     GtkWidget *title_label = gtk_label_new(_("Speicherpfad:"));
+
     gtk_box_append(GTK_BOX(vbox), title_label);
 
     // Create a group for the radio buttons
@@ -653,19 +672,19 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     gtk_box_append(GTK_BOX(vtoolBox), convert_to_TIFF);
 
     g_signal_connect(convert_to_PNG, "clicked", G_CALLBACK(+[] (GtkButton *btn, gpointer data) {
-                         convert_checked_files_to("png",GTK_WIDGET(data));
+                         convert_checked_files_to(png,GTK_WIDGET(data));
                      }), window);
 
     g_signal_connect(convert_to_JPG, "clicked", G_CALLBACK(+[] (GtkButton *btn, gpointer data) {
-                         convert_checked_files_to("jpg",GTK_WIDGET(data));
+                         convert_checked_files_to(jpg,GTK_WIDGET(data));
                      }), window);
 
     g_signal_connect(convert_to_PDF, "clicked", G_CALLBACK(+[] (GtkButton *btn, gpointer data) {
-                         convert_checked_files_to("pdf",GTK_WIDGET(data));
+                         convert_checked_files_to(pdf,GTK_WIDGET(data));
                      }), window);
 
     g_signal_connect(convert_to_TIFF, "clicked", G_CALLBACK(+[] (GtkButton *btn, gpointer data) {
-                         convert_checked_files_to("tiff",GTK_WIDGET(data));
+                         convert_checked_files_to(tiff,GTK_WIDGET(data));
                      }), window);
 
     GtkWidget *buttons_end = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
@@ -704,8 +723,6 @@ void on_activate(GtkApplication *app, gpointer user_data) {
     GtkWidget *spacer_right = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_set_hexpand (spacer_right, TRUE);
     gtk_box_append (GTK_BOX (line_box), spacer_right);
-
-
 
     gtk_box_append (GTK_BOX (box), line_box);
 

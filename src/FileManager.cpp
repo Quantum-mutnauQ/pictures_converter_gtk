@@ -56,11 +56,8 @@ char* convert_to_file_url(const char *filepath) {
     char *url = g_strdup_printf("file://%s", filepath);
     return url;
 }
-gboolean is_multiside_format(const gchar *filename) {
-    const gchar *ext = strrchr(filename, '.');
-    if (!ext) return FALSE;
-    ext++; // skip the '.'
-    return g_ascii_strcasecmp(ext, "pdf") == 0 || g_ascii_strcasecmp(ext, "tiff") == 0 || g_ascii_strcasecmp(ext, "tif") == 0;
+gboolean is_multiside_format(OutPutFormat format){
+    return format == pdf || format == tiff;
 }
 // Hilfsfunktion: Falls Datei existiert, neuen Namen mit _1, _2, ... generieren
 gchar *ensure_unique_filename(const gchar *path) {
@@ -152,7 +149,7 @@ void clear_lists() {
     refresh_coosedlistbox(choosed_file_paths);
     refresh_computedlistbox(computed_file_paths);
 }
-gchar* replace_extension_and_path(int page, const gchar *filepath, const gchar *new_ext,const gchar *new_file_path) {
+gchar* replace_extension_and_path(int page, const gchar *filepath, OutPutFormat new_format,const gchar *new_file_path) {
     gchar *dirname = g_path_get_dirname(filepath);
     gchar *basename = g_path_get_basename(filepath);
     gchar *dot = strrchr(basename, '.');
@@ -161,6 +158,22 @@ gchar* replace_extension_and_path(int page, const gchar *filepath, const gchar *
 
     gchar *new_filename;
 
+    const char *new_ext;
+    switch (new_format) {
+        case png:
+            new_ext = "png";
+            break;
+        case jpg:
+            new_ext = "jpg";
+            break;
+        case pdf:
+            new_ext = "pdf";
+            break;
+        case tiff:
+            new_ext = "tiff";
+            break;
+    }
+
     if (page > 0) {
         // Erstelle den neuen Dateinamen mit der Seitenzahl
         new_filename = g_strconcat(basename, "_", g_strdup_printf("%d", page), ".", new_ext, NULL);
@@ -168,6 +181,8 @@ gchar* replace_extension_and_path(int page, const gchar *filepath, const gchar *
         // Erstelle den neuen Dateinamen ohne Seitenzahl
         new_filename = g_strconcat(basename, ".", new_ext, NULL);
     }
+
+    //g_free(new_ext);
 
     if (destinationDiretryType == PicturesFolder) {
         g_free(dirname);
@@ -189,15 +204,15 @@ gchar* replace_extension_and_path(int page, const gchar *filepath, const gchar *
 
     return new_path;
 }
-void convert_checked_files_to_stage2(const gchar *new_ext,GtkWidget *window,const gchar *new_file_path){
+void convert_checked_files_to_stage2(OutPutFormat new_format,GtkWidget *window,const gchar *new_file_path){
     GList *to_remove = NULL;
 
     for (GList *l = choosed_file_paths; l != NULL; l = l->next) {
         inFile *inf = (inFile*) l->data;
         if (inf->selected) {
-            if(g_strcmp0(new_ext, "tiff") == 0 || g_strcmp0(new_ext, "pdf") == 0){
+            if(new_format == tiff || new_format == pdf){
                 // Dateipfad mit neuer Extension
-                gchar *new_path = replace_extension_and_path(0,inf->filepath, new_ext,new_file_path);
+                gchar *new_path = replace_extension_and_path(0,inf->filepath, new_format,new_file_path);
                 gchar *new_uneqe_path=ensure_unique_filename(new_path);
                 g_free(new_path);
 
@@ -206,6 +221,7 @@ void convert_checked_files_to_stage2(const gchar *new_ext,GtkWidget *window,cons
                 out->outFilePath = new_uneqe_path;
                 out->inFilePath = g_strdup(inf->filepath); // Kopie des alten Pfads
                 out->max_pages=inf->pages;
+                out->new_format=new_format;
 
                 uint32_t* pages = new uint32_t[inf->pages];
                 out->numPages=0;
@@ -220,7 +236,7 @@ void convert_checked_files_to_stage2(const gchar *new_ext,GtkWidget *window,cons
             else {
                 for(uint32_t i = 0 ; i <= inf->pages;i++){
                     // Dateipfad mit neuer Extension
-                    gchar *new_path = replace_extension_and_path(i,inf->filepath, new_ext,new_file_path);
+                    gchar *new_path = replace_extension_and_path(i,inf->filepath, new_format,new_file_path);
                     gchar *new_uneqe_path=ensure_unique_filename(new_path);
                     g_free(new_path);
 
@@ -229,6 +245,7 @@ void convert_checked_files_to_stage2(const gchar *new_ext,GtkWidget *window,cons
                     out->outFilePath = new_uneqe_path;
                     out->inFilePath = g_strdup(inf->filepath); // Kopie des alten Pfads
                     out->max_pages=inf->pages;
+                    out->new_format=new_format;
                     uint32_t *pages=new uint32_t[1];
                     pages[0]=i;
                     out->numPages=1;
@@ -243,9 +260,9 @@ void convert_checked_files_to_stage2(const gchar *new_ext,GtkWidget *window,cons
 
     convert_files(window);
 }
-void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
+void convert_checked_files_to(OutPutFormat format,GtkWidget *window) {
     if(destinationDiretryType == SourceFolder || destinationDiretryType == PicturesFolder){
-        convert_checked_files_to_stage2(new_ext,window,NULL);
+        convert_checked_files_to_stage2(format,window,NULL);
 
     }else if (destinationDiretryType == AskForFolder){
         GtkFileDialog *dialog = gtk_file_dialog_new();
@@ -254,7 +271,7 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
 
         FilechooserNewPathWindow *parameter = new FilechooserNewPathWindow;
         parameter->window = window;
-        parameter->new_file_ext = new_ext;
+        parameter->new_format=format;
 
         gtk_file_dialog_select_folder(dialog, GTK_WINDOW(window), NULL,
                                       (GAsyncReadyCallback)[] (GObject *source_object, GAsyncResult *res, gpointer user_data) {
@@ -263,7 +280,7 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
                                           if (!file) return;
                                           FilechooserNewPathWindow *parameter = (FilechooserNewPathWindow *)user_data;
 
-                                          convert_checked_files_to_stage2(parameter->new_file_ext, parameter->window, g_file_get_path(file));
+                                          convert_checked_files_to_stage2(parameter->new_format, parameter->window, g_file_get_path(file));
                                           g_object_unref(file);
                                           g_free(parameter);
                                       },
@@ -273,4 +290,3 @@ void convert_checked_files_to(const gchar *new_ext,GtkWidget *window) {
 
     }
 }
-

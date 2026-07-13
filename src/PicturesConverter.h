@@ -7,6 +7,12 @@
 
 #define PICTURES_CONVERTER_VERSION "1.3"
 
+typedef enum{
+    png,
+    jpg,
+    pdf,
+    tiff,
+} OutPutFormat;
 
 struct inFile{
     gchar *filepath;
@@ -20,21 +26,21 @@ struct outFile{
     uint32_t *pages;
     uint32_t numPages;
     uint32_t max_pages;
-};
-struct inJobFile{
-    const gchar *inFilePath;
-    uint32_t *pages;
-    uint32_t numPages;
-
+    OutPutFormat new_format;
 };
 struct convertJobFile{
     const gchar *outFilePath;
+    OutPutFormat new_format;
     GList *inJobFiles;
 };
 typedef struct {
     GtkProgressBar *bar;
     GtkLabel       *label;
     GtkWindow      *window;
+    GtkButton      *Close_button;
+    GtkTextView    *failed_jobs_text_view;
+    GtkTextBuffer  *failed_jobs_buffer;
+    GList          *faluredJobs;
 } UIInfo;
 
 typedef struct {
@@ -44,9 +50,14 @@ typedef struct {
     const gchar *outFilePath;
 } UIInfoTransver;
 
+typedef struct {
+    outFile *outFilePath;
+    const gchar *reason;
+} FailedJob;
+
 struct FilechooserNewPathWindow{
     GtkWidget *window;
-    const char* new_file_ext;
+    OutPutFormat new_format;
 };
 
 enum TagedDitrectory{
@@ -64,11 +75,11 @@ inline GtkWidget *compression_spin;
 inline GtkWidget *dpi_spin;
 
 //FileManager
-gboolean is_multiside_format(const gchar *filename);
+gboolean is_multiside_format(OutPutFormat format);
 gchar *ensure_unique_filename(const gchar *path);
 void add_file(const gchar *filepath);
 void clear_lists();
-void convert_checked_files_to(const gchar *new_ext,GtkWidget *window);
+void convert_checked_files_to(OutPutFormat format,GtkWidget *window);
 gboolean ensure_directory_exists(gchar *directory_path);
 
 //Ui
