@@ -56,10 +56,77 @@ msgstr "  Input file: %s\n"
 msgid "    Pages: "
 msgstr "    Pages: "
 
+#: Converter.cpp:196
+#, c-format
+msgid "Output directory does not exist and could not be created: %s"
+msgstr "Output directory does not exist and could not be created: %s"
+
+#: Converter.cpp:212
+msgid "Failed to open TIFF output file (TIFFOpen error)"
+msgstr "Failed to open TIFF output file (TIFFOpen error)"
+
+#: Converter.cpp:219
+#, c-format
+msgid "Failed to create PDF surface: %s"
+msgstr "Failed to create PDF surface: %s"
+
+#: Converter.cpp:231
+#, c-format
+msgid "Failed to create PDF cairo context: %s"
+msgstr "Failed to create PDF surface: %s"
+
+#: Converter.cpp:248
+#, c-format
+msgid "Failed to render PDF page %u"
+msgstr "Failed to render PDF page %u"
+
+#: Converter.cpp:256
+#, c-format
+msgid "Failed to open or set directory for TIFF, page %u"
+msgstr "Failed to open or set directory for TIFF, page %u"
+
+#: Converter.cpp:269
+#, c-format
+msgid "Failed to read TIFF image data, page %u:"
+msgstr "Failed to read TIFF image data, page %u:"
+
+#: Converter.cpp:308 Converter.cpp:327
+#, c-format
+msgid "Failed to load image: %s"
+msgstr "Failed to load image: %s"
+
+#: Converter.cpp:360
+#, c-format
+msgid "Unsupported input MIME type: %s"
+msgstr "Unsupported input MIME type: %s"
+
+#: Converter.cpp:378
+#, c-format
+msgid "Failed to create scaled surface: %s"
+msgstr "Failed to create scaled surface: %s"
+
+#: Converter.cpp:445
+msgid "Failed to write TIFF scanline"
+msgstr "Failed to write TIFF scanline"
+
 #: Converter.cpp:459
 #, c-format
 msgid "Fehler beim Speichern: %s\n"
 msgstr "Error saving: %s\n"
+
+#: Converter.cpp:508
+#, c-format
+msgid "Failed to save JPEG: %s"
+msgstr "Failed to save JPEG: %s"
+
+#: Converter.cpp:519
+#, c-format
+msgid "Failed to save PNG: %s"
+msgstr "Failed to save PNG: %s"
+
+#: Converter.cpp:574
+msgid "Fehlgeschlagene Datein:"
+msgstr "Failed files:"
 
 #: FileManager.cpp:10
 #, c-format
@@ -124,6 +191,10 @@ msgstr "Conversion process"
 #: UI.cpp:184
 msgid "hi"
 msgstr "Hello"
+
+#: UI.cpp:198
+msgid "Schliesen"
+msgstr "close"
 
 #: UI.cpp:236
 msgid "Datei auswälen"
@@ -278,7 +349,9 @@ msgstr "<b>PDF:</b>"
 msgid ""
 "Scan-Auflösung der PDF in DPI (Dots Per Inch). Höher = schärfer, größere "
 "Dateien."
-msgstr "Scan resolution of the PDF in DPI (dots per inch). Higher = sharper, larger files."
+msgstr ""
+"Scan resolution of the PDF in DPI (dots per inch). Higher = sharper, larger "
+"files."
 
 #: UI.cpp:774
 msgid "DPI"

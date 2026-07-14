@@ -56,10 +56,77 @@ msgstr "  Eingabedatei: %s\n"
 msgid "    Pages: "
 msgstr "    Seiten: "
 
+#: Converter.cpp:196
+#, c-format
+msgid "Output directory does not exist and could not be created: %s"
+msgstr "Ausgabeverzeichnis existiert nicht und konnte nicht erstellt werden: %s"
+
+#: Converter.cpp:212
+msgid "Failed to open TIFF output file (TIFFOpen error)"
+msgstr "Fehler beim Öffnen der TIFF-Ausgabedatei (TIFFOpen-Fehler)"
+
+#: Converter.cpp:219
+#, c-format
+msgid "Failed to create PDF surface: %s"
+msgstr "Fehler beim Erstellen der PDF-Oberfläche: %s"
+
+#: Converter.cpp:231
+#, c-format
+msgid "Failed to create PDF cairo context: %s"
+msgstr "Fehler beim Erstellen des PDF-Cairo-Kontexts: %s"
+
+#: Converter.cpp:248
+#, c-format
+msgid "Failed to render PDF page %u"
+msgstr "Fehler beim Rendern der PDF-Seite %u"
+
+#: Converter.cpp:256
+#, c-format
+msgid "Failed to open or set directory for TIFF, page %u"
+msgstr "Fehler beim Öffnen oder Festlegen des TIFF-Verzeichnisses, Seite %u"
+
+#: Converter.cpp:269
+#, c-format
+msgid "Failed to read TIFF image data, page %u:"
+msgstr "Fehler beim Lesen der TIFF-Bilddaten, Seite %u:"
+
+#: Converter.cpp:308 Converter.cpp:327
+#, c-format
+msgid "Failed to load image: %s"
+msgstr "Fehler beim Laden des Bildes: %s"
+
+#: Converter.cpp:360
+#, c-format
+msgid "Unsupported input MIME type: %s"
+msgstr "Nicht unterstützter Eingabe-MIME-Typ: %s"
+
+#: Converter.cpp:378
+#, c-format
+msgid "Failed to create scaled surface: %s"
+msgstr "Fehler beim Erstellen der skalierten Oberfläche: %s"
+
+#: Converter.cpp:445
+msgid "Failed to write TIFF scanline"
+msgstr "Fehler beim Schreiben der TIFF-Scanline"
+
 #: Converter.cpp:459
 #, c-format
 msgid "Fehler beim Speichern: %s\n"
 msgstr "Fehler beim Speichern: %s\n"
+
+#: Converter.cpp:508
+#, c-format
+msgid "Failed to save JPEG: %s"
+msgstr "Fehler beim Speichern von JPEG: %s"
+
+#: Converter.cpp:519
+#, c-format
+msgid "Failed to save PNG: %s"
+msgstr "Fehler beim Speichern von PNG: %s"
+
+#: Converter.cpp:574
+msgid "Fehlgeschlagene Datein:"
+msgstr "Fehlgeschlagene Dateien:"
 
 #: FileManager.cpp:10
 #, c-format
@@ -124,6 +191,10 @@ msgstr "Umwandlungsprozess"
 #: UI.cpp:184
 msgid "hi"
 msgstr "Hallo"
+
+#: UI.cpp:198
+msgid "Schliesen"
+msgstr "Schliesen"
 
 #: UI.cpp:236
 msgid "Datei auswälen"

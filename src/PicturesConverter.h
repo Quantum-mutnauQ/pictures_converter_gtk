@@ -5,7 +5,7 @@
 
 #define _(STRING) gettext(STRING)
 
-#define PICTURES_CONVERTER_VERSION "1.3"
+#define PICTURES_CONVERTER_VERSION "1.4"
 
 typedef enum{
     png,
