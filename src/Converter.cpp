@@ -300,12 +300,61 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     _TIFFfree(raster);
                     TIFFClose(tif);
                 } else if (g_str_has_prefix(in_mime, "image/")) {
-                    surf = cairo_image_surface_create_from_png(infile->inFilePath);
-                    if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
+                    GError *pix_error = NULL;
+                    GdkPixbuf *src_pix = gdk_pixbuf_new_from_file(infile->inFilePath, &pix_error);
+
+                    if (!src_pix) {
                         job_success = FALSE;
-                        error_reason=g_strdup_printf(_("Failed to load image: %s"), cairo_status_to_string(cairo_surface_status(surf)));
+                        error_reason = g_strdup_printf(_("Failed to load image: %s"), pix_error ? pix_error->message : "");
+                        if (pix_error) g_error_free(pix_error);
                         break;
                     }
+
+                    if (!gdk_pixbuf_get_has_alpha(src_pix)) {
+                        GdkPixbuf *tmp = gdk_pixbuf_add_alpha(src_pix, FALSE, 0, 0, 0);
+                        g_object_unref(src_pix);
+                        src_pix = tmp;
+                    }
+
+                    int pw = gdk_pixbuf_get_width(src_pix);
+                    int ph = gdk_pixbuf_get_height(src_pix);
+                    int p_stride = gdk_pixbuf_get_rowstride(src_pix);
+                    guchar *p_data = gdk_pixbuf_get_pixels(src_pix);
+
+                    surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, pw, ph);
+                    if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
+                        job_success = FALSE;
+                        error_reason = g_strdup_printf(_("Failed to load image: %s"),  cairo_status_to_string(cairo_surface_status(surf)));
+                        g_object_unref(src_pix);
+                        break;
+                    }
+
+                    unsigned char *c_data = cairo_image_surface_get_data(surf);
+                    int c_stirde = cairo_image_surface_get_stride(surf);
+
+                    for (int y = 0; y < ph; y++) {
+                        guchar *srow = p_data + y * p_stride;
+                        unsigned char *drow = c_data + y * c_stirde;
+                        for (int x = 0; x < pw; x++) {
+                            guchar r = srow[x * 4 + 0];
+                            guchar g = srow[x * 4 + 1];
+                            guchar b = srow[x * 4 + 2];
+                            guchar a = srow[x * 4 + 3];
+
+                            if (a < 255) {
+                                r = (guchar)((r * a) / 255);
+                                g = (guchar)((g * a) / 255);
+                                b = (guchar)((b * a) / 255);
+                            }
+
+                            uint32_t *dpx = (uint32_t *)(drow + x * 4);
+                            *dpx = (a << 24) | (r << 16) | (g << 8) | b;
+                        }
+                    }
+
+                    cairo_surface_mark_dirty(surf);
+                    g_object_unref(src_pix);
+
                 } else {
                     job_success = FALSE;
                     error_reason=g_strdup_printf(_("Unsupported input MIME type: %s"), in_mime);
