@@ -188,9 +188,12 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
 
         gboolean job_success = TRUE;
+        gchar *error_reason = nullptr;
+
         gchar* out_directory_path = g_path_get_dirname(job->outFilePath);
         if(!ensure_directory_exists(out_directory_path)){
             job_success = FALSE;
+            error_reason=g_strdup_printf(_("Output directory does not exist and could not be created: %s"), out_directory_path);
             g_free(out_directory_path);
             break;
         }
@@ -203,14 +206,20 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
         cairo_surface_t *pdf_surface = NULL;
         cairo_t *pdf_cr = NULL;
         if (job->new_format == tiff) {
-            tiff_out = TIFFOpen(job->outFilePath, "w8");struct outFile *source_outfile;
-            if (!tiff_out) job_success = FALSE;
+            tiff_out = TIFFOpen(job->outFilePath, "w8");
+            if (!tiff_out){
+                job_success = FALSE;
+                error_reason = g_strdup_printf(_("Failed to open TIFF output file (TIFFOpen error)"));
+                break;
+            }
         } else if (job->new_format == pdf) {
             pdf_surface = cairo_pdf_surface_create(job->outFilePath, 595, 842);
             if (cairo_surface_status(pdf_surface) != CAIRO_STATUS_SUCCESS) {
                 job_success = FALSE;
+                error_reason= g_strdup_printf(_("Failed to create PDF surface: %s"), cairo_status_to_string(cairo_surface_status(pdf_surface)));
                 if (pdf_surface) cairo_surface_destroy(pdf_surface);
                 pdf_surface = NULL;
+                break;
             } else {
                 pdf_cr = cairo_create(pdf_surface);
                 if (cairo_status(pdf_cr) != CAIRO_STATUS_SUCCESS) {
@@ -219,6 +228,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     pdf_cr = NULL;
                     pdf_surface = NULL;
                     job_success = FALSE;
+                    error_reason=g_strdup_printf(_("Failed to create PDF cairo context: %s"), cairo_status_to_string(cairo_status(pdf_cr)));
+                    break;
                 }
             }
         }
@@ -234,6 +245,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                 if (g_str_has_prefix(in_mime, "application/pdf")) {
                     if (!render_pdf_page_to_surface(infile->inFilePath, infile->pages[i], dpi, &surf)) {
                         job_success = FALSE;
+                        error_reason=g_strdup_printf(_("Failed to render PDF page %u"), infile->pages[i]);
                         break;
                     }
                 } else if (g_str_has_prefix(in_mime, "image/tiff")) {
@@ -241,6 +253,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     if (!tif || !TIFFSetDirectory(tif, infile->pages[i])) {
                         if (tif) TIFFClose(tif);
                         job_success = FALSE;
+                        error_reason= g_strdup_printf(_("Failed to open or set directory for TIFF, page %u"), infile->pages[i]);
                         break;
                     }
 
@@ -253,6 +266,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         if (raster) _TIFFfree(raster);
                         TIFFClose(tif);
                         job_success = FALSE;
+                        error_reason= g_strdup_printf(_("Failed to read TIFF image data, page %u:"), infile->pages[i]);
                         break;
                     }
 
@@ -289,10 +303,12 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     surf = cairo_image_surface_create_from_png(infile->inFilePath);
                     if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
                         job_success = FALSE;
+                        error_reason=g_strdup_printf(_("Failed to load image: %s"), cairo_status_to_string(cairo_surface_status(surf)));
                         break;
                     }
                 } else {
                     job_success = FALSE;
+                    error_reason=g_strdup_printf(_("Unsupported input MIME type: %s"), in_mime);
                     break;
                 }
                 if (res_scaling != 100 && surf) {
@@ -310,6 +326,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         cairo_surface_destroy(scaled);
                         cairo_surface_destroy(surf);
                         job_success = FALSE;
+                        error_reason=g_strdup_printf(_("Failed to create scaled surface: %s"), cairo_status_to_string(cairo_surface_status(scaled)));
                         break;
                     }
 
@@ -376,6 +393,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
                         if (TIFFWriteScanline(tiff_out, rowbuf, row, 0) < 0) {
                             job_success = FALSE;
+                            error_reason=g_strdup_printf(_("Failed to write TIFF scanline"));
                             break;
                         }
                     }
@@ -438,13 +456,19 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         if (!gdk_pixbuf_save(pix, job->outFilePath, "jpeg", &error,"quality", g_strdup_printf("%d", quality), NULL)) {
                             g_printerr(_("Fehler beim Speichern: %s\n"), error->message);
                             job_success=FALSE;
+                            error_reason=g_strdup_printf(_("Failed to save JPEG: %s"), error->message);
                             g_error_free(error);
                         }
                         g_object_unref(pix);
-                    }else
+                    }else{
                         job_success=FALSE;
+                        error_reason=g_strdup_printf("Failed to save JPEG");
+                    }
                 } else {
-                    cairo_surface_write_to_png(surf, job->outFilePath);
+                    if (cairo_surface_write_to_png(surf, job->outFilePath) != CAIRO_STATUS_SUCCESS) {
+                        job_success = FALSE;
+                        error_reason = g_strdup_printf(_("Failed to save PNG: %s"), cairo_status_to_string(cairo_surface_status(surf)));
+                    }
                 }
 
                 cairo_surface_destroy(surf);
@@ -452,7 +476,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
             if (!job_success){
                 FailedJob *failed_job = g_new0(FailedJob, 1);
                 failed_job->outFilePath = infile;
-                failed_job->reason = NULL;
+                failed_job->reason = error_reason;
                 failed_files = g_list_append(failed_files, failed_job);
             }
             else
