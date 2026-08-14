@@ -565,34 +565,36 @@ gboolean idle_close_ui_and_free(gpointer data) {
     return G_SOURCE_REMOVE;
 }
 
-gboolean idle_show_falured(gpointer data) {
-    UIInfo *ui = (UIInfo*) data;
-    if (!ui || !ui->failed_jobs_buffer) {
+gboolean idle_show_falured(gpointer data){
+    UIInfo *ui = (UIInfo *)data;
+    if (!ui || !ui->failed_jobs_label)
         return G_SOURCE_REMOVE;
+
+    gtk_label_set_text(ui->label, _("Fehlgeschlagene Dateien:"));
+
+    gtk_widget_set_visible(GTK_WIDGET(ui->Close_button), TRUE);
+    gtk_widget_set_visible(GTK_WIDGET(ui->failed_jobs_label), TRUE);
+
+    GString *markup = g_string_new("");
+
+    for (GList *l = ui->faluredJobs; l != NULL; l = l->next){
+        FailedJob *job = (FailedJob*)l->data;
+        if (!job || !job->outFilePath)
+            continue;
+
+        g_string_append_printf(markup,
+            "<a href=\"%s\">%s</a>:\n    %s\n\n",
+            job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "",
+            job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "(null)",
+            job->reason ? job->reason : "(kein Grund)"
+        );
     }
 
-    gtk_label_set_text(ui->label, _("Fehlgeschlagene Datein:"));
-
-    gtk_widget_set_visible(GTK_WIDGET(ui->Close_button), true);
-    gtk_widget_set_visible(GTK_WIDGET(ui->failed_jobs_text_view), true);
-
-    GString *text = g_string_new("");
-
-    for (GList *l = ui->faluredJobs; l != NULL; l = l->next) {
-        FailedJob *job = (FailedJob*) l->data;
-        if (job && job->outFilePath) {
-            g_string_append_printf(text, "%s:\n      %s\n",
-                                   job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "(null)",
-                                   job->reason ? job->reason : "(no reason)");
-        }
-    }
-
-    gtk_text_buffer_set_text(ui->failed_jobs_buffer, text->str, -1);
-    g_string_free(text, TRUE);
+    gtk_label_set_markup(GTK_LABEL(ui->failed_jobs_label), markup->str);
+    g_string_free(markup, TRUE);
 
     return G_SOURCE_REMOVE;
 }
-
 
 void* run_convert_files(void* data){
 

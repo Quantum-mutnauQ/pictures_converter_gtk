@@ -290,3 +290,15 @@ void convert_checked_files_to(OutPutFormat format,GtkWidget *window) {
 
     }
 }
+
+void open_folder_from_File(const gchar *filepath){
+    if (filepath && g_file_test(filepath, G_FILE_TEST_EXISTS)){
+        GFile* file = g_file_new_for_path(filepath);
+        GtkFileLauncher* file_launcher = gtk_file_launcher_new(file);
+
+        gtk_file_launcher_open_containing_folder(file_launcher, NULL, NULL, NULL, file);
+
+        g_object_unref(file_launcher);
+        g_object_unref(file);
+    }
+}

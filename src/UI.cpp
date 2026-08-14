@@ -1,4 +1,5 @@
 #include "PicturesConverter.h"
+#include <cstddef>
 #ifdef USE_ADWAITA
 #include <adwaita.h>
 #endif
@@ -16,15 +17,7 @@ void on_check_button_toggled(GtkCheckButton *toggle_button, gpointer user_data) 
 static void on_image_double_click(GtkGestureClick *gesture, int n_press, double x, double y, gpointer user_data){
     if (n_press == 2) { // Doppelclick
         const gchar *filepath = (const gchar *)user_data;
-        if (filepath && g_file_test(filepath, G_FILE_TEST_EXISTS)){
-            GFile* file = g_file_new_for_path(filepath);
-            GtkFileLauncher* file_launcher = gtk_file_launcher_new(file);
-
-            gtk_file_launcher_open_containing_folder(file_launcher, NULL, NULL, NULL, file);
-
-            g_object_unref(file_launcher);
-            g_object_unref(file);
-        }
+        open_folder_from_File(filepath);
     }
 }
 void refresh_coosedlistbox(GList *paths) {
@@ -154,6 +147,14 @@ void refresh_computedlistbox(GList *paths) {
 
     }
 }
+
+gboolean on_label_activate_link(GtkLabel *label, const gchar *uri, gpointer user_data){
+    open_folder_from_File(uri);
+
+    return TRUE;
+}
+
+
 void convert_files(GtkWidget* main_window) {
     if (!convert_file_paths) {
         g_print(_("Keine Dateien zum Konvertieren vorhanden.\n"));
@@ -167,8 +168,8 @@ void convert_files(GtkWidget* main_window) {
     gtk_window_set_child(GTK_WINDOW(progress_window), vbox);
 
     GtkWidget* spacer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_hexpand(spacer, TRUE);
-    gtk_widget_set_vexpand(spacer, TRUE);
+    gtk_widget_set_hexpand(spacer, FALSE);
+    gtk_widget_set_vexpand(spacer, FALSE);
     gtk_box_append(GTK_BOX(vbox), spacer);
     // Progress Bar
     GtkWidget* progressBar = gtk_progress_bar_new();
@@ -176,24 +177,26 @@ void convert_files(GtkWidget* main_window) {
 
     // Spacer
     GtkWidget* spacer2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_hexpand(spacer2, TRUE);
-    gtk_widget_set_vexpand(spacer2, TRUE);
+    gtk_widget_set_hexpand(spacer2, FALSE);
+    gtk_widget_set_vexpand(spacer2, FALSE);
     gtk_box_append(GTK_BOX(vbox), spacer2);
 
     // Label
     GtkWidget* label = gtk_label_new(_("hi"));
     gtk_box_append(GTK_BOX(vbox), label);
 
-    GtkTextBuffer *failed_job_buffer = gtk_text_buffer_new(NULL);
-
-    GtkWidget *failed_jobs = gtk_text_view_new_with_buffer(failed_job_buffer);
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(failed_jobs), FALSE);
+    GtkWidget *failed_jobs = gtk_label_new(_("hi"));
+    gtk_label_set_selectable(GTK_LABEL(failed_jobs), TRUE);
     GtkWidget *scrolled_window = gtk_scrolled_window_new();
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled_window), failed_jobs);
     gtk_box_append(GTK_BOX(vbox), scrolled_window);
     gtk_widget_set_visible(failed_jobs, false);
 
-    gtk_text_buffer_set_text(failed_job_buffer, "hallo", -1);
+    gtk_widget_set_hexpand(failed_jobs, TRUE);
+    gtk_widget_set_vexpand(failed_jobs, TRUE);
+    gtk_widget_set_halign(failed_jobs, GTK_ALIGN_START);
+    gtk_widget_set_valign(failed_jobs, GTK_ALIGN_START);
+    g_signal_connect(failed_jobs, "activate-link", G_CALLBACK(on_label_activate_link),NULL);
 
     GtkWidget *close = gtk_button_new_with_label(_("Schliesen"));
     gtk_box_append(GTK_BOX(vbox), close);
@@ -205,8 +208,7 @@ void convert_files(GtkWidget* main_window) {
     ui->label = GTK_LABEL(label);
     ui->window = GTK_WINDOW(progress_window);
     ui->Close_button=GTK_BUTTON(close);
-    ui->failed_jobs_buffer=GTK_TEXT_BUFFER(failed_job_buffer);
-    ui->failed_jobs_text_view=GTK_TEXT_VIEW(failed_jobs);
+    ui->failed_jobs_label=GTK_LABEL(failed_jobs);
 
     g_signal_connect(close, "clicked",  G_CALLBACK(+[] (GtkButton *btn, gpointer user_data) {
                         UIInfo *ui = (UIInfo *)user_data;

@@ -5,7 +5,7 @@
 
 #define _(STRING) gettext(STRING)
 
-#define PICTURES_CONVERTER_VERSION "1.4"
+#define PICTURES_CONVERTER_VERSION "1.5"
 
 typedef enum{
     png,
@@ -38,8 +38,7 @@ typedef struct {
     GtkLabel       *label;
     GtkWindow      *window;
     GtkButton      *Close_button;
-    GtkTextView    *failed_jobs_text_view;
-    GtkTextBuffer  *failed_jobs_buffer;
+    GtkLabel       *failed_jobs_label;
     GList          *faluredJobs;
 } UIInfo;
 
@@ -81,6 +80,7 @@ void add_file(const gchar *filepath);
 void clear_lists();
 void convert_checked_files_to(OutPutFormat format,GtkWidget *window);
 gboolean ensure_directory_exists(gchar *directory_path);
+void open_folder_from_File(const gchar *filepath);
 
 //Ui
 void refresh_computedlistbox(GList *paths);
