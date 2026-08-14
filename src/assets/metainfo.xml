@@ -66,6 +66,19 @@
 
 
 <releases>
+  <release version="1.5" date="2026-08-14">
+    <description>
+      <p>Version 1.5</p>
+      <p>Features added:</p>
+      <ul>
+            <li>Make failed files clickable to open in File Explorer</li>
+      </ul>
+      <p>Other changes:</p>
+      <ul>
+            <li>Updated dependencies on Flatpak</li>
+      </ul>
+    </description>
+  </release>
   <release version="1.4" date="2026-07-14">
     <description>
       <p>Version 1.4</p>

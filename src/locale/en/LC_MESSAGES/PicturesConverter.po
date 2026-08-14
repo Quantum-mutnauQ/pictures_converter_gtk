@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-01 18:03+0100\n"
+"POT-Creation-Date: 2026-08-14 21:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,32 +27,32 @@ msgstr "Could not retrieve default configuration directory.\n"
 msgid "Fehler beim Erstellen des Verzeichnisses PicturesConverter.\n"
 msgstr "Error while creating PicturesConverter directory.\n"
 
-#: Config.cpp:63
+#: Config.cpp:75
 #, c-format
 msgid "Error while writing file.\n"
 msgstr "Error while writing the file.\n"
 
-#: Config.cpp:73
+#: Config.cpp:85
 #, c-format
 msgid "Error while reading file: %s:%d - %s\n"
 msgstr "Error while reading the file: %s:%d - %s\n"
 
-#: Config.cpp:77
+#: Config.cpp:89
 #, c-format
 msgid "Trye to corrct\n"
 msgstr "Try to correct it\n"
 
-#: Converter.cpp:104
+#: Converter.cpp:90
 #, c-format
 msgid "Output File: %s\n"
 msgstr "Output file: %s\n"
 
-#: Converter.cpp:109
+#: Converter.cpp:95
 #, c-format
 msgid "  Input File: %s\n"
 msgstr "  Input file: %s\n"
 
-#: Converter.cpp:110
+#: Converter.cpp:96
 msgid "    Pages: "
 msgstr "    Pages: "
 
@@ -109,7 +109,7 @@ msgstr "Failed to create scaled surface: %s"
 msgid "Failed to write TIFF scanline"
 msgstr "Failed to write TIFF scanline"
 
-#: Converter.cpp:459
+#: Converter.cpp:506
 #, c-format
 msgid "Fehler beim Speichern: %s\n"
 msgstr "Error saving: %s\n"
@@ -124,8 +124,9 @@ msgstr "Failed to save JPEG: %s"
 msgid "Failed to save PNG: %s"
 msgstr "Failed to save PNG: %s"
 
-#: Converter.cpp:574
-msgid "Fehlgeschlagene Datein:"
+#: Converter.cpp:573
+#, fuzzy
+msgid "Fehlgeschlagene Dateien:"
 msgstr "Failed files:"
 
 #: FileManager.cpp:10
@@ -153,25 +154,25 @@ msgstr "Error while determining file type: %s\n"
 msgid "Fehler beim Duplizieren des Dateityps.\n"
 msgstr "Error while duplicating file type.\n"
 
-#: FileManager.cpp:111
+#: FileManager.cpp:108
 #, c-format
 msgid "Fehler beim Öffnen der PDF-Datei: %s\n"
 msgstr "Error while opening PDF file: %s\n"
 
-#: FileManager.cpp:128
+#: FileManager.cpp:125
 #, c-format
 msgid "Fehler beim Öffnen der TIFF-Datei: %s\n"
 msgstr "Error while opening TIFF file: %s\n"
 
-#: FileManager.cpp:176
+#: FileManager.cpp:191
 msgid "Umgewandelt"
 msgstr "Converted"
 
-#: FileManager.cpp:252
+#: FileManager.cpp:269
 msgid "Ziel Ordner Auswählen"
 msgstr "Select target folder"
 
-#: UI.cpp:141
+#: UI.cpp:134
 #, c-format
 msgid ""
 "Original Datei: %s\n"
@@ -180,172 +181,172 @@ msgstr ""
 "Original file: %s\n"
 "Converted file: %s"
 
-#: UI.cpp:159
+#: UI.cpp:160
 msgid "Keine Dateien zum Konvertieren vorhanden.\n"
 msgstr "No files available for conversion.\n"
 
-#: UI.cpp:164
+#: UI.cpp:165
 msgid "Umwandlungsprozess"
 msgstr "Conversion process"
 
-#: UI.cpp:184
+#: UI.cpp:185 UI.cpp:188
 msgid "hi"
 msgstr "Hello"
 
-#: UI.cpp:198
+#: UI.cpp:201
 msgid "Schliesen"
 msgstr "close"
 
-#: UI.cpp:236
+#: UI.cpp:256
 msgid "Datei auswälen"
 msgstr "Select file"
 
-#: UI.cpp:241
+#: UI.cpp:261
 msgid "Erlaubte Dateien"
 msgstr "Allowed files"
 
-#: UI.cpp:307 UI.cpp:448
+#: UI.cpp:327 UI.cpp:469
 msgid "Einstellungen"
 msgstr "Settings"
 
-#: UI.cpp:319
+#: UI.cpp:339
 msgid "Speicherpfad:"
 msgstr "Storage Path:"
 
-#: UI.cpp:323
+#: UI.cpp:344
 msgid "Ins Ursprungsverzeichnis"
 msgstr "Location of the source image"
 
-#: UI.cpp:324
+#: UI.cpp:345
 msgid "In Bilder/Umgewandelt"
 msgstr "In Images/Converted"
 
-#: UI.cpp:325
+#: UI.cpp:346
 msgid "Immer Fragen"
 msgstr "Always Ask"
 
-#: UI.cpp:329
+#: UI.cpp:350
 msgid "Ins Ursprungsverzeichnis (Benötigt \"filesystem=host\" Zugriff)"
 msgstr "Into the source directory (Requires \"filesystem=host\" access)"
 
-#: UI.cpp:368
+#: UI.cpp:389
 msgid "Converting image formats."
 msgstr "Converting image formats."
 
-#: UI.cpp:444
+#: UI.cpp:465
 msgid "Bild Hinzufügen"
 msgstr "Add image"
 
-#: UI.cpp:445
+#: UI.cpp:466
 msgid "Bild Hinzufügen und Liste löschen"
 msgstr "Add image and clear list"
 
-#: UI.cpp:446 UI.cpp:485
+#: UI.cpp:467 UI.cpp:506
 msgid "Ausgewälte Entfernen"
 msgstr "Remove selected"
 
-#: UI.cpp:447 UI.cpp:486
+#: UI.cpp:468 UI.cpp:507
 msgid "Alle Entfernen"
 msgstr "Remove all"
 
-#: UI.cpp:449
+#: UI.cpp:470
 msgid "Schließen"
 msgstr "Close"
 
-#: UI.cpp:451
+#: UI.cpp:472
 msgid "Datei"
 msgstr "File"
 
-#: UI.cpp:456
+#: UI.cpp:477
 msgid "Vollbild"
 msgstr "Fullscreen"
 
-#: UI.cpp:457
+#: UI.cpp:478
 msgid "Ansicht"
 msgstr "View"
 
-#: UI.cpp:462
+#: UI.cpp:483
 msgid "Über"
 msgstr "About"
 
-#: UI.cpp:463
+#: UI.cpp:484
 msgid "Hilfe"
 msgstr "Help"
 
-#: UI.cpp:529
+#: UI.cpp:550
 msgid "Icon mit standart Namen gefunden.\n"
 msgstr "Icon found with standard name.\n"
 
-#: UI.cpp:531
+#: UI.cpp:552
 msgid "Icon nicht gefunden.\n"
 msgstr "Icon not found.\n"
 
-#: UI.cpp:534
+#: UI.cpp:555
 #, c-format
 msgid "ICON_NAME ist definiert: %s\n"
 msgstr "ICON_NAME is defined: %s\n"
 
-#: UI.cpp:565
+#: UI.cpp:586
 msgid "Pictures Converter"
 msgstr "Pictures Converter"
 
-#: UI.cpp:593
+#: UI.cpp:614
 msgid "Füge Dateien hinzu"
 msgstr "Add files"
 
-#: UI.cpp:641
+#: UI.cpp:664
 msgid "PNG"
 msgstr "PNG"
 
-#: UI.cpp:644
+#: UI.cpp:667
 msgid "JPG"
 msgstr "JPG"
 
-#: UI.cpp:647
+#: UI.cpp:670
 msgid "PDF"
 msgstr "PDF"
 
-#: UI.cpp:650
+#: UI.cpp:673
 msgid "TIFF"
 msgstr "TIFF"
 
-#: UI.cpp:688
+#: UI.cpp:712
 msgid "von"
 msgstr "from"
 
-#: UI.cpp:696
+#: UI.cpp:720
 msgid "zu"
 msgstr "to"
 
-#: UI.cpp:727
+#: UI.cpp:746
 msgid "<b>Schnell einstellungen:</b>"
 msgstr "Quick settings:"
 
-#: UI.cpp:732
+#: UI.cpp:751
 msgid "Prozentuale Skalierung der Bildauflösung (z. B. 100 = original)."
 msgstr "Percentage scaling of image resolution (e.g. 100 = original)."
 
-#: UI.cpp:734
+#: UI.cpp:753
 msgid "Auflösung skalieren (%)"
 msgstr "Scale resolution (%)"
 
-#: UI.cpp:748
+#: UI.cpp:767
 msgid "<b>JPG:</b>"
 msgstr "<b>JPG:</b>"
 
-#: UI.cpp:752
+#: UI.cpp:771
 msgid "JPG-Qualität: höher = bessere Qualität, größere Dateien (1–100)."
 msgstr "JPG quality: higher = better quality, larger files (1–100)."
 
-#: UI.cpp:754
+#: UI.cpp:773
 msgid "Kompremierung"
 msgstr "Compression"
 
-#: UI.cpp:768
+#: UI.cpp:787
 msgid "<b>PDF:</b>"
 msgstr "<b>PDF:</b>"
 
-#: UI.cpp:772
+#: UI.cpp:791
 msgid ""
 "Scan-Auflösung der PDF in DPI (Dots Per Inch). Höher = schärfer, größere "
 "Dateien."
@@ -353,10 +354,10 @@ msgstr ""
 "Scan resolution of the PDF in DPI (dots per inch). Higher = sharper, larger "
 "files."
 
-#: UI.cpp:774
+#: UI.cpp:793
 msgid "DPI"
 msgstr "DPI"
 
-#: UI.cpp:787
+#: UI.cpp:806
 msgid "Zurücksetzen"
 msgstr "Reset"
