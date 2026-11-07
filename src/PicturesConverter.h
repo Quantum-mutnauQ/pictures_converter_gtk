@@ -5,7 +5,7 @@
 
 #define _(STRING) gettext(STRING)
 
-#define PICTURES_CONVERTER_VERSION "1.5"
+#define PICTURES_CONVERTER_VERSION "1.6"
 
 typedef enum{
     png,
@@ -81,6 +81,7 @@ void clear_lists();
 void convert_checked_files_to(OutPutFormat format,GtkWidget *window);
 gboolean ensure_directory_exists(gchar *directory_path);
 void open_folder_from_File(const gchar *filepath);
+void free_out_file(gpointer data);
 
 //Ui
 void refresh_computedlistbox(GList *paths);

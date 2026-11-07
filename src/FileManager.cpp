@@ -3,6 +3,14 @@
 #include <poppler/glib/poppler.h> // Für PDF
 #include <tiffio.h> // Für TIFF
 
+
+void free_out_file(gpointer data) {
+    outFile *o=(outFile*)data;
+    g_free((gpointer)o->outFilePath);
+    g_free((gpointer)o->inFilePath);
+    g_free(o->pages);
+    g_free(o);
+}
 gboolean ensure_directory_exists(gchar *directory_path) {
     if (!g_file_test(directory_path, G_FILE_TEST_IS_DIR)) {
         uint reult = g_mkdir_with_parents(directory_path, 0755);
@@ -139,10 +147,17 @@ void add_file(const gchar *filepath) {
 
     choosed_file_paths = g_list_append(choosed_file_paths,info );
 }
+
+void free_in_file(gpointer p){
+    inFile *f=(inFile*)p;
+    g_free(f->filepath);
+    g_free(f);
+}
+
 void clear_lists() {
-    g_list_free_full(choosed_file_paths, g_free);
-    g_list_free_full(computed_file_paths, g_free);
-    g_list_free_full(convert_file_paths, g_free);
+    g_list_free_full(choosed_file_paths, free_in_file);
+    g_list_free_full(computed_file_paths, free_out_file);
+    g_list_free(convert_file_paths);
     choosed_file_paths = NULL;
     computed_file_paths = NULL;
     convert_file_paths=NULL;
@@ -176,7 +191,9 @@ gchar* replace_extension_and_path(int page, const gchar *filepath, OutPutFormat 
 
     if (page > 0) {
         // Erstelle den neuen Dateinamen mit der Seitenzahl
-        new_filename = g_strconcat(basename, "_", g_strdup_printf("%d", page), ".", new_ext, NULL);
+        gchar *page_indecator = g_strdup_printf("%d", page);
+        new_filename = g_strconcat(basename, "_", page_indecator , ".", new_ext, NULL);
+        g_free(page_indecator);
     } else {
         // Erstelle den neuen Dateinamen ohne Seitenzahl
         new_filename = g_strconcat(basename, ".", new_ext, NULL);
@@ -205,8 +222,6 @@ gchar* replace_extension_and_path(int page, const gchar *filepath, OutPutFormat 
     return new_path;
 }
 void convert_checked_files_to_stage2(OutPutFormat new_format,GtkWidget *window,const gchar *new_file_path){
-    GList *to_remove = NULL;
-
     for (GList *l = choosed_file_paths; l != NULL; l = l->next) {
         inFile *inf = (inFile*) l->data;
         if (inf->selected) {
@@ -223,7 +238,7 @@ void convert_checked_files_to_stage2(OutPutFormat new_format,GtkWidget *window,c
                 out->max_pages=inf->pages;
                 out->new_format=new_format;
 
-                uint32_t* pages = new uint32_t[inf->pages];
+                uint32_t* pages = g_new(uint32_t, inf->pages + 1);
                 out->numPages=0;
                 for(uint32_t i = 0 ; i <= inf->pages;i++){
                     pages[i]=i;
@@ -246,15 +261,13 @@ void convert_checked_files_to_stage2(OutPutFormat new_format,GtkWidget *window,c
                     out->inFilePath = g_strdup(inf->filepath); // Kopie des alten Pfads
                     out->max_pages=inf->pages;
                     out->new_format=new_format;
-                    uint32_t *pages=new uint32_t[1];
+                    uint32_t *pages=g_new(uint32_t,1);
                     pages[0]=i;
                     out->numPages=1;
                     out->pages=pages;
                     convert_file_paths = g_list_append(convert_file_paths, out);
                 }
             }
-            // Für späteres Entfernen vormerken
-            to_remove = g_list_prepend(to_remove, inf);
         }
     }
 
@@ -269,7 +282,7 @@ void convert_checked_files_to(OutPutFormat format,GtkWidget *window) {
         gtk_file_dialog_set_title(dialog, _("Ziel Ordner Auswählen"));
         gtk_file_dialog_set_modal(dialog, TRUE);
 
-        FilechooserNewPathWindow *parameter = new FilechooserNewPathWindow;
+        FilechooserNewPathWindow *parameter = g_new0(FilechooserNewPathWindow,1);
         parameter->window = window;
         parameter->new_format=format;
 
@@ -277,10 +290,16 @@ void convert_checked_files_to(OutPutFormat format,GtkWidget *window) {
                                       (GAsyncReadyCallback)[] (GObject *source_object, GAsyncResult *res, gpointer user_data) {
                                           GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
                                           GFile *file = gtk_file_dialog_select_folder_finish(dialog, res, NULL);
-                                          if (!file) return;
                                           FilechooserNewPathWindow *parameter = (FilechooserNewPathWindow *)user_data;
 
-                                          convert_checked_files_to_stage2(parameter->new_format, parameter->window, g_file_get_path(file));
+                                          if (!file){
+                                              g_free(parameter);
+                                              return;
+                                          }
+
+                                          gchar *path  =  g_file_get_path(file);
+                                          convert_checked_files_to_stage2(parameter->new_format, parameter->window, path);
+                                          g_free(path);
                                           g_object_unref(file);
                                           g_free(parameter);
                                       },

@@ -65,11 +65,13 @@ void refresh_coosedlistbox(GList *paths) {
 
         gtk_box_append(GTK_BOX(row), image);
 
-        const gchar *filename = g_path_get_basename(filepath);
+        gchar *filename = g_path_get_basename(filepath);
         GtkWidget *label = gtk_label_new(filename);
         gtk_widget_set_hexpand(label, TRUE);
         gtk_label_set_xalign(GTK_LABEL(label), 0.0);
         gtk_box_append(GTK_BOX(row), label);
+
+        g_free(filename);
 
         gtk_widget_set_tooltip_text(row, filepath);
 
@@ -125,13 +127,17 @@ void refresh_computedlistbox(GList *paths) {
 
         gtk_box_append(GTK_BOX(row), image);
 
-        const gchar *filename = g_path_get_basename(filepath);
+        gchar *filename = g_path_get_basename(filepath);
         GtkWidget *label = gtk_label_new(filename);
         gtk_widget_set_hexpand(label, TRUE);
         gtk_label_set_xalign(GTK_LABEL(label), 0.0);
         gtk_box_append(GTK_BOX(row), label);
 
-        gtk_widget_set_tooltip_text(row, g_strdup_printf(_("Original Datei: %s\nUmgewandelnde Datei: %s"), out_File->inFilePath, out_File->outFilePath));
+        g_free(filename);
+
+        gchar *tip = g_strdup_printf(_("Original Datei: %s\nUmgewandelnde Datei: %s"), out_File->inFilePath, out_File->outFilePath);
+        gtk_widget_set_tooltip_text(row, tip);
+        g_free(tip);
 
         GtkWidget *list_row = gtk_list_box_row_new();
         gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(list_row), row);
@@ -154,6 +160,12 @@ gboolean on_label_activate_link(GtkLabel *label, const gchar *uri, gpointer user
     return TRUE;
 }
 
+void free_failed_job(gpointer p) {
+    FailedJob *j = (FailedJob*)p;
+    g_free((gpointer)j->reason);
+    free_out_file(j->outFilePath);
+    g_free(j);
+}
 
 void convert_files(GtkWidget* main_window) {
     if (!convert_file_paths) {
@@ -213,6 +225,7 @@ void convert_files(GtkWidget* main_window) {
     g_signal_connect(close, "clicked",  G_CALLBACK(+[] (GtkButton *btn, gpointer user_data) {
                         UIInfo *ui = (UIInfo *)user_data;
                         gtk_window_destroy(ui->window);
+                        g_list_free_full(ui->faluredJobs, free_failed_job);
                         g_free(ui);
                      }), ui);
 
@@ -240,6 +253,7 @@ void delete_selected_rows() {
         if (file_data) {
             // Mache etwas mit file_data
             choosed_file_paths = g_list_remove(choosed_file_paths, file_data);
+            g_free(file_data->filepath);
             g_free(file_data);
         }
     }
@@ -265,8 +279,11 @@ void on_add_file_clicked(GtkButton *button, gpointer user_data) {
     GListStore *filter_store = g_list_store_new(G_TYPE_OBJECT);
     g_list_store_append(filter_store, filter);
 
+    g_object_unref(filter);
+
     // Set the filters for the dialog
     gtk_file_dialog_set_filters(dialog, G_LIST_MODEL(filter_store));
+    g_object_unref(filter_store);
 
 
     gtk_file_dialog_open_multiple(dialog, parent_window, NULL,
@@ -428,26 +445,32 @@ GtkWidget *create_menu_bar(GtkApplication *app, GtkWidget *window) {
     GSimpleAction *quit_action = g_simple_action_new("quit", NULL);
     g_signal_connect(quit_action, "activate", G_CALLBACK(on_quit_activate), window);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(quit_action));
+    g_object_unref(quit_action);
 
     GSimpleAction *about_action = g_simple_action_new("about", NULL);
     g_signal_connect(about_action, "activate", G_CALLBACK(on_about_activate), NULL);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(about_action));
+    g_object_unref(about_action);
 
     GSimpleAction *toggle_fullscreen_action = g_simple_action_new("toggle-fullscreen", NULL);
     g_signal_connect(toggle_fullscreen_action, "activate", G_CALLBACK(toggle_fullscreen), window);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(toggle_fullscreen_action));
+    g_object_unref(toggle_fullscreen_action);
 
     GSimpleAction *add_immatge_action = g_simple_action_new("addImage", NULL);
     g_signal_connect(add_immatge_action, "activate", G_CALLBACK(on_add_file_clicked), window);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(add_immatge_action));
+    g_object_unref(add_immatge_action);
 
     GSimpleAction *add_imatge_and_clear_list_action = g_simple_action_new("addImageAndClearList", NULL);
     g_signal_connect(add_imatge_and_clear_list_action, "activate", G_CALLBACK(on_add_file_and_clear_list_clicked), window);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(add_imatge_and_clear_list_action));
+    g_object_unref(add_imatge_and_clear_list_action);
 
     GSimpleAction *settings_list_action = g_simple_action_new("settings", NULL);
     g_signal_connect(settings_list_action, "activate", G_CALLBACK(on_settings_clicked), window);
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(settings_list_action));
+    g_object_unref(settings_list_action);
 
 
     const gchar *accels[] = { "F11", NULL };
@@ -471,6 +494,9 @@ GtkWidget *create_menu_bar(GtkApplication *app, GtkWidget *window) {
 
     GMenuItem *file_item = g_menu_item_new_submenu(_("Datei"), G_MENU_MODEL(file_menu));
     g_menu_append_item(menu_model, file_item);
+    g_object_unref(file_item);
+    g_object_unref(file_menu);
+
 
     // Ansicht-Menü
     GMenu *ansicht_menu = g_menu_new();
@@ -483,6 +509,8 @@ GtkWidget *create_menu_bar(GtkApplication *app, GtkWidget *window) {
     g_menu_append(help_menu, _("Über"), "app.about");
     GMenuItem *help_item = g_menu_item_new_submenu(_("Hilfe"), G_MENU_MODEL(help_menu));
     g_menu_append_item(menu_model, help_item);
+    g_object_unref(help_item);
+    g_object_unref(help_menu);
 
     // Menüleiste erzeugen
     GtkWidget *menu_bar = gtk_popover_menu_bar_new_from_model(G_MENU_MODEL(menu_model));
@@ -531,6 +559,7 @@ void add_popover_menu_to_listbox(GtkWidget *listbox) {
         gtk_popover_set_pointing_to(GTK_POPOVER(popover), &rect);
 
         gtk_popover_popup(GTK_POPOVER(popover));
+        g_object_unref(menu);
     };
 
     g_signal_connect(right_click, "pressed",
@@ -569,16 +598,20 @@ void on_activate(GtkApplication *app, gpointer user_data) {
 
     if (!source) {
         g_printerr("Fehler beim Laden der Schema-Quelle: %s\n", error->message);
+
         g_error_free(error);
         return;
     }
 
     GSettingsSchema *schema = g_settings_schema_source_lookup(source, "io.github.quantum_mutnauq.pictures_converter_gtk.State", TRUE);
     if (!schema) {
+        g_settings_schema_source_unref(source);
         g_printerr("Schema nicht gefunden!\n");
         return;
     }
     settings = g_settings_new_full(schema, NULL, NULL);
+    g_settings_schema_unref(schema);
+    g_settings_schema_source_unref(source);
 #else
     settings = g_settings_new ("io.github.quantum_mutnauq.pictures_converter_gtk.State");
 #endif
@@ -822,4 +855,5 @@ void on_activate(GtkApplication *app, gpointer user_data) {
 
     gtk_window_set_child(GTK_WINDOW(window), box);
     gtk_widget_set_visible(window, TRUE);
+    g_object_unref(settings);
 }

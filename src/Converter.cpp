@@ -4,9 +4,15 @@
 #include <cairo-pdf.h>
 #include <magic.h>
 
+void free_group(gpointer p){
+    GList **g=(GList**)p;
+    g_list_free(*g);
+    g_free(g);
+}
+
 GList *group_convert_jobs(GList *outFiles) {
     GList *result = NULL;
-    GHashTable *grouped = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_list_free);
+    GHashTable *grouped = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)free_group);
 
     // Gruppierung der outFile-Einträge
     GList *outFileIter;
@@ -154,10 +160,20 @@ gboolean update_on_idle(gpointer data) {
 
         gtk_progress_bar_set_fraction(progressBar,(double)ui->processed_jobs / (double)ui->total_jobs);
         gtk_label_set_text(label, ui->outFilePath);
+        g_free((gpointer)ui->outFilePath);
         g_free(ui);
 
     }
     return G_SOURCE_REMOVE;
+}
+
+void add_failed_jobs(GList **failed, struct convertJobFile *job, const gchar *reason) {
+    for (GList *l = job->inJobFiles; l; l = l->next) {
+        FailedJob *fj = g_new0(FailedJob, 1);
+        fj->outFilePath = (outFile*)l->data;
+        fj->reason = g_strdup(reason);
+        *failed = g_list_append(*failed, fj);
+    }
 }
 
 // Hauptkonvertierungsfunktion
@@ -181,7 +197,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
         UIInfoTransver *uiTransver = g_new0(UIInfoTransver, 1);
 
         uiTransver->processed_jobs=processed_jobs;
-        uiTransver->outFilePath=job->outFilePath;
+        uiTransver->outFilePath=g_strdup(job->outFilePath);
         uiTransver->uIInfo=info;
         uiTransver->total_jobs=total_jobs;
         g_idle_add(update_on_idle, uiTransver);
@@ -195,7 +211,9 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
             job_success = FALSE;
             error_reason=g_strdup_printf(_("Output directory does not exist and could not be created: %s"), out_directory_path);
             g_free(out_directory_path);
-            break;
+            add_failed_jobs(&failed_files, job, error_reason);
+            g_free(error_reason);
+            continue;
         }
         g_free(out_directory_path);
 
@@ -210,7 +228,9 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
             if (!tiff_out){
                 job_success = FALSE;
                 error_reason = g_strdup_printf(_("Failed to open TIFF output file (TIFFOpen error)"));
-                break;
+                add_failed_jobs(&failed_files, job, error_reason);
+                g_free(error_reason);
+                continue;
             }
         } else if (job->new_format == pdf) {
             pdf_surface = cairo_pdf_surface_create(job->outFilePath, 595, 842);
@@ -219,17 +239,21 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                 error_reason= g_strdup_printf(_("Failed to create PDF surface: %s"), cairo_status_to_string(cairo_surface_status(pdf_surface)));
                 if (pdf_surface) cairo_surface_destroy(pdf_surface);
                 pdf_surface = NULL;
-                break;
+                add_failed_jobs(&failed_files, job, error_reason);
+                g_free(error_reason);
+                continue;
             } else {
                 pdf_cr = cairo_create(pdf_surface);
                 if (cairo_status(pdf_cr) != CAIRO_STATUS_SUCCESS) {
+                    error_reason=g_strdup_printf(_("Failed to create PDF cairo context: %s"), cairo_status_to_string(cairo_status(pdf_cr)));
                     cairo_destroy(pdf_cr);
                     cairo_surface_destroy(pdf_surface);
                     pdf_cr = NULL;
                     pdf_surface = NULL;
                     job_success = FALSE;
-                    error_reason=g_strdup_printf(_("Failed to create PDF cairo context: %s"), cairo_status_to_string(cairo_status(pdf_cr)));
-                    break;
+                    add_failed_jobs(&failed_files, job, error_reason);
+                    g_free(error_reason);
+                    continue;
                 }
             }
         }
@@ -246,6 +270,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     if (!render_pdf_page_to_surface(infile->inFilePath, infile->pages[i], dpi, &surf)) {
                         job_success = FALSE;
                         error_reason=g_strdup_printf(_("Failed to render PDF page %u"), infile->pages[i]);
+                        add_failed_jobs(&failed_files, job, error_reason);
+                        g_free(error_reason);
                         break;
                     }
                 } else if (g_str_has_prefix(in_mime, "image/tiff")) {
@@ -254,6 +280,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         if (tif) TIFFClose(tif);
                         job_success = FALSE;
                         error_reason= g_strdup_printf(_("Failed to open or set directory for TIFF, page %u"), infile->pages[i]);
+                        add_failed_jobs(&failed_files, job, error_reason);
+                        g_free(error_reason);
                         break;
                     }
 
@@ -267,6 +295,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         TIFFClose(tif);
                         job_success = FALSE;
                         error_reason= g_strdup_printf(_("Failed to read TIFF image data, page %u:"), infile->pages[i]);
+                        add_failed_jobs(&failed_files, job, error_reason);
+                        g_free(error_reason);
                         break;
                     }
 
@@ -307,6 +337,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         job_success = FALSE;
                         error_reason = g_strdup_printf(_("Failed to load image: %s"), pix_error ? pix_error->message : "");
                         if (pix_error) g_error_free(pix_error);
+                        add_failed_jobs(&failed_files, job, error_reason);
+                        g_free(error_reason);
                         break;
                     }
 
@@ -323,9 +355,13 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
                     surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, pw, ph);
                     if (cairo_surface_status(surf) != CAIRO_STATUS_SUCCESS) {
-                        job_success = FALSE;
                         error_reason = g_strdup_printf(_("Failed to load image: %s"),  cairo_status_to_string(cairo_surface_status(surf)));
+                        cairo_surface_destroy(surf);
+                        surf = NULL;
+                        job_success = FALSE;
                         g_object_unref(src_pix);
+                        add_failed_jobs(&failed_files, job, error_reason);
+                        g_free(error_reason);
                         break;
                     }
 
@@ -358,6 +394,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                 } else {
                     job_success = FALSE;
                     error_reason=g_strdup_printf(_("Unsupported input MIME type: %s"), in_mime);
+                    add_failed_jobs(&failed_files, job, error_reason);
+                    g_free(error_reason);
                     break;
                 }
                 if (res_scaling != 100 && surf) {
@@ -372,10 +410,13 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     cairo_t *cr = cairo_create(scaled);
 
                     if (cairo_surface_status(scaled) != CAIRO_STATUS_SUCCESS) {
+                        cairo_destroy(cr);
                         cairo_surface_destroy(scaled);
                         cairo_surface_destroy(surf);
                         job_success = FALSE;
                         error_reason=g_strdup_printf(_("Failed to create scaled surface: %s"), cairo_status_to_string(cairo_surface_status(scaled)));
+                        add_failed_jobs(&failed_files, job, error_reason);
+                        g_free(error_reason);
                         break;
                     }
 
@@ -443,6 +484,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                         if (TIFFWriteScanline(tiff_out, rowbuf, row, 0) < 0) {
                             job_success = FALSE;
                             error_reason=g_strdup_printf(_("Failed to write TIFF scanline"));
+                            add_failed_jobs(&failed_files, job, error_reason);
+                            g_free(error_reason);
                             break;
                         }
                     }
@@ -486,15 +529,7 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
                     }
 
                     /* Pixbuf ohne Alpha */
-                    GdkPixbuf *pix = gdk_pixbuf_new_from_data(
-                        rgb,
-                        GDK_COLORSPACE_RGB,
-                        FALSE,        /* no alpha */
-                        8,
-                        w, h,
-                        rgb_stride,
-                        (GdkPixbufDestroyNotify)g_free,
-                        rgb);
+                    GdkPixbuf *pix = gdk_pixbuf_new_from_data(rgb, GDK_COLORSPACE_RGB, FALSE /*(no alpha)*/ , 8, w, h, rgb_stride, (GdkPixbufDestroyNotify)g_free, rgb);
 
                     if (pix) {
                         int quality = CLAMP(kompression, 0, 100);
@@ -502,14 +537,18 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
 
                         GError *error = NULL;
 
-                        if (!gdk_pixbuf_save(pix, job->outFilePath, "jpeg", &error,"quality", g_strdup_printf("%d", quality), NULL)) {
+                        gchar *quality_string = g_strdup_printf("%d", quality);
+
+                        if (!gdk_pixbuf_save(pix, job->outFilePath, "jpeg", &error,"quality", quality_string, NULL)) {
                             g_printerr(_("Fehler beim Speichern: %s\n"), error->message);
                             job_success=FALSE;
                             error_reason=g_strdup_printf(_("Failed to save JPEG: %s"), error->message);
                             g_error_free(error);
                         }
                         g_object_unref(pix);
+                        g_free(quality_string);
                     }else{
+                        g_free(rgb);
                         job_success=FALSE;
                         error_reason=g_strdup_printf("Failed to save JPEG");
                     }
@@ -542,13 +581,8 @@ GList *process_convert_jobs(GList *convert_job_list,UIInfo* info, int res_scalin
     return failed_files;
 }
 
-void free_out_file(gpointer data) {
-    //g_free(data);
-    //g_free((gpointer)file->outFilePath);
-    //g_list_free_full(file->inJobFiles,free_inJobFile);
-}
 gboolean idle_refresh(gpointer data) {
-    g_list_free_full(convert_file_paths, free_out_file);
+    g_list_free(convert_file_paths);
     convert_file_paths = NULL;
 
     refresh_coosedlistbox(choosed_file_paths);
@@ -583,11 +617,11 @@ gboolean idle_show_falured(gpointer data){
             continue;
 
         g_string_append_printf(markup,
-            "<a href=\"%s\">%s</a>:\n    %s\n\n",
-            job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "",
-            job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "(null)",
-            job->reason ? job->reason : "(kein Grund)"
-        );
+                               "<a href=\"%s\">%s</a>:\n    %s\n\n",
+                               job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "",
+                               job->outFilePath->inFilePath ? job->outFilePath->inFilePath : "(null)",
+                               job->reason ? job->reason : "(kein Grund)"
+                               );
     }
 
     gtk_label_set_markup(GTK_LABEL(ui->failed_jobs_label), markup->str);
