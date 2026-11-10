@@ -66,6 +66,19 @@
 
 
 <releases>
+  <release version="1.6" date="2026-11-10">
+    <description>
+      <p>Version 1.6</p>
+      <p>Fixes:</p>
+      <ul>
+            <li>Fixed memory leaks</li>
+      </ul>
+      <p>Other changes:</p>
+      <ul>
+            <li>Updated dependencies on Flatpak</li>
+      </ul>
+    </description>
+  </release>
   <release version="1.5" date="2026-08-14">
     <description>
       <p>Version 1.5</p>
